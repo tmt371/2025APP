@@ -26,6 +26,8 @@
             margin: 0 auto;
             background-color: var(--app-bg-color);
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative; /* 設為絕對定位的基準 */
+            overflow: hidden;
         }
         .results-panel {
             flex-grow: 1;
@@ -42,102 +44,77 @@
             flex-shrink: 0;
             background-color: var(--keyboard-bg-color);
             border-top: 1px solid var(--panel-border-color);
+            padding: 15px;
             position: relative;
             transition: all 0.3s ease-in-out;
-            box-sizing: border-box;
-            padding-top: 35px; /* 為頂部按鈕留出空間 */
-            overflow: hidden; /* 隱藏滑出區域外的鍵盤 */
-        }
-        .panel-header {
-            position: absolute;
-            top: 5px;
-            left: 15px;
-            right: 15px;
-            display: flex;
-            justify-content: center;
-            height: 25px;
-        }
-        .panel-toggle, .keyboard-switcher {
-            border: 1px solid #ccc;
-            background-color: #fff;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .panel-toggle {
-            width: 80px;
-            height: 20px;
-        }
-        /* [新增] 鍵盤切換器樣式 */
-        .keyboard-switcher {
-            position: absolute;
-            right: 0;
-            width: 40px;
-            height: 20px;
-        }
-        .panel-toggle svg, .keyboard-switcher svg {
-            width: 20px;
-            height: 20px;
-            transition: transform 0.3s ease-in-out;
-        }
-        /* [新增] 鍵盤滑動容器 */
-        .keyboard-flipper {
-            display: flex;
-            width: 200%; /* 兩個鍵盤的總寬度 */
-            transition: transform 0.3s ease-in-out;
-        }
-        .keyboard-flipper.show-functions {
-            transform: translateX(-50%); /* 向左滑動一個鍵盤的寬度 */
-        }
-        /* [新增] 通用鍵盤樣式 */
-        .keyboard {
-            width: 50%; /* 每個鍵盤佔據一半空間 */
-            padding: 15px;
             box-sizing: border-box;
         }
         .input-display {
             border: 1px solid #ccc;
             background-color: #fff;
-            padding: 10px;
-            font-size: 1.8em;
-            text-align: right;
-            margin-bottom: 15px;
-            min-height: 36px;
-            border-radius: 4px;
+            padding: 10px; font-size: 1.8em; text-align: right; margin-bottom: 15px;
+            min-height: 36px; border-radius: 4px;
         }
         .virtual-keyboard {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            /* [修改] 數字鍵盤改為4欄佈局 */
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
         }
         .virtual-keyboard button {
-            padding: 12px;
+            padding: 12px 5px; /* 微調padding以容納更多按鍵 */
             font-size: 1.3em;
             cursor: pointer;
             border-radius: 4px;
             border: 1px solid #ccc;
             background-color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .panel-toggle {
+            position: absolute; top: -1px; left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            width: 80px; height: 25px;
+            border: 1px solid var(--panel-border-color); border-bottom: none;
+            background-color: var(--keyboard-bg-color); border-radius: 8px 8px 0 0;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+        }
+        .panel-toggle svg {
+            width: 20px; height: 20px;
+            transition: transform 0.3s ease-in-out;
         }
         .keyboard-panel.is-collapsed {
-            height: 30px !important;
-            padding: 0;
-            border-top-width: 0;
-        }
-        .keyboard-panel.is-collapsed .keyboard-flipper {
-            visibility: hidden;
+            height: 0 !important;
+            padding: 0; border-top-width: 0; overflow: hidden;
         }
         .keyboard-panel.is-collapsed .panel-toggle {
-           top: 5px;
-           left: 50%;
-           transform: translateX(-50%);
+            display: none; /* 收合時也隱藏這個按鈕 */
         }
-        .keyboard-panel.is-collapsed .panel-toggle svg {
-            transform: rotate(180deg);
+
+        /* [新增] 第三層：功能鍵盤面板 */
+        .function-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #e9eef5; /* 使用不同的底色以區分 */
+            border-top: 1px solid var(--panel-border-color);
+            padding: 15px;
+            z-index: 20; /* 確保在最上層 */
+            transform: translateY(100%); /* 預設隱藏在螢幕下方 */
+            transition: transform 0.3s ease-in-out;
+        }
+        .function-panel.is-visible {
+            transform: translateY(0%); /* 顯示時滑入畫面 */
+        }
+        .function-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .function-keyboard button {
+            padding: 15px 5px; font-size: 1em;
+            cursor: pointer; border-radius: 4px;
+            border: 1px solid #ccc; background-color: #fff;
         }
     </style>
 </head>
@@ -150,38 +127,34 @@
                 <tbody><tr><td colspan="4" style="color: #888;">Please enter dimensions to begin...</td></tr></tbody>
             </table>
         </div>
-        <div class="keyboard-panel" id="keyboard-panel">
-            <div class="panel-header">
-                <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
-                </div>
-                <div class="keyboard-switcher" id="keyboard-switcher" title="Switch to Function Keys">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-                </div>
+
+        <div class="keyboard-panel" id="numeric-keyboard-panel">
+            <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </div>
-            <div class="keyboard-flipper" id="keyboard-flipper">
-                <div class="keyboard" id="numeric-keyboard">
-                    <div class="input-display" id="input-display"></div>
-                    <div class="virtual-keyboard">
-                        <button data-key="1">1</button> <button data-key="2">2</button> <button data-key="3">3</button>
-                        <button data-key="4">4</button> <button data-key="5">5</button> <button data-key="6">6</button>
-                        <button data-key="7">7</button> <button data-key="8">8</button> <button data-key="9">9</button>
-                        <button data-key="W">W</button> <button data-key="0">0</button> <button data-key="H">H</button>
-                        <button data-key="DEL" style="grid-column: 1 / 3;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.5em; height: 1.5em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg>
-                        </button>
-                        <button data-key="ENT">ENT</button>
-                    </div>
-                </div>
-                <div class="keyboard" id="function-keyboard">
-                     <div class="virtual-keyboard" style="grid-template-columns: repeat(2, 1fr);">
-                        <button data-key="INSERT_BLIND">Insert Blind (Add)</button>
-                        <button data-key="APPEND_BLIND">Append Blind (Add)</button>
-                        <button data-key="DELETE_BLIND">Delete Blind (Del)</button>
-                        <button data-key="MAKE_QUOTE">Make Quote (Quo)</button>
-                        <button data-key="NEXT_STAGE" style="grid-column: 1 / 3;">Next Stage (Next)</button>
-                    </div>
-                </div>
+            <div class="input-display" id="input-display"></div>
+            <div class="virtual-keyboard" id="numeric-keyboard">
+                <button data-key="1">1</button> <button data-key="2">2</button> <button data-key="3">3</button> <button data-key="W">W</button>
+                <button data-key="4">4</button> <button data-key="5">5</button> <button data-key="6">6</button> <button data-key="H">H</button>
+                <button data-key="7">7</button> <button data-key="8">8</button> <button data-key="9">9</button>
+                <button data-key="TOGGLE_FUNCTIONS" title="Function Keys">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.5em; height:1.5em;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg>
+                </button>
+                <button data-key="0" style="grid-column: 1 / 3;">0</button>
+                <button data-key="DEL">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.5em; height: 1.5em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg>
+                </button>
+                <button data-key="ENT">ENT</button>
+            </div>
+        </div>
+
+        <div class="function-panel" id="function-panel">
+             <div class="function-keyboard">
+                <button data-key="INSERT_BLIND">Insert Blind</button>
+                <button data-key="APPEND_BLIND">Append Blind</button>
+                <button data-key="DELETE_BLIND">Delete Blind</button>
+                <button data-key="MAKE_QUOTE">Make Quote</button>
+                <button data-key="NEXT_STAGE">Next Stage</button>
             </div>
         </div>
     </div>
