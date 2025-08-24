@@ -14,7 +14,8 @@ export class InputHandler {
      */
     initialize() {
         this._setupPanelToggle();
-        this._setupVirtualKeyboard();
+        this._setupKeyboard();
+        this._setupKeyboardSwitcher(); // [新增] 初始化鍵盤切換器
         console.log("InputHandler initialized and listeners are active.");
     }
 
@@ -29,20 +30,31 @@ export class InputHandler {
         }
     }
 
-    _setupVirtualKeyboard() {
-        const keyboard = document.getElementById('virtual-keyboard');
-        if (keyboard) {
-            keyboard.addEventListener('click', (event) => {
-                // 確保我們點擊的是一個按鈕
+    // [修改] 將此方法改名為 _setupKeyboard 以涵蓋所有鍵盤
+    _setupKeyboard() {
+        const flipper = document.getElementById('keyboard-flipper');
+        if (flipper) {
+            flipper.addEventListener('click', (event) => {
                 const button = event.target.closest('button');
                 if (!button) return;
 
                 const key = button.dataset.key;
                 if (key) {
                     console.log(`Key pressed: ${key}`);
-                    // 發布一個統一的按鍵事件，供其他模組監聽
                     this.eventAggregator.publish('virtualKeyPressed', { key });
                 }
+            });
+        }
+    }
+    
+    // [新增] 設定左右滑動切換鍵盤的功能
+    _setupKeyboardSwitcher() {
+        const switcherButton = document.getElementById('keyboard-switcher');
+        const flipper = document.getElementById('keyboard-flipper');
+
+        if (switcherButton && flipper) {
+            switcherButton.addEventListener('click', () => {
+                flipper.classList.toggle('show-functions');
             });
         }
     }
