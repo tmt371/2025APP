@@ -19,7 +19,7 @@
         }
         .app-container {
             display: flex;
-            flex-direction: column; /* 始終保持「上下」垂直佈局 */
+            flex-direction: column; /* 我們的預期佈局 */
             height: 100%;
             width: 100%;
             max-width: 1000px;
@@ -135,6 +135,19 @@
             </div>
         </div>
     </div>
+
     <script type="module" src="./04-core-code/main.js"></script>
+
+    <script>
+      // 這是為了對抗外部環境干擾的最終保險措施。
+      // 它會確保主容器的佈局永遠是我們期望的「上下」模式。
+      document.addEventListener('DOMContentLoaded', () => {
+        const appContainer = document.getElementById('app');
+        if (appContainer) {
+          appContainer.style.flexDirection = 'column';
+          console.log('Failsafe script executed: Layout forced to vertical.');
+        }
+      });
+    </script>
 </body>
 </html>
