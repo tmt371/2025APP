@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,54 +10,33 @@
             --keyboard-bg-color: #f3f4f6;
             --app-bg-color: #ffffff;
         }
-
-        html,
-        body {
+        html, body {
             height: 100%;
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
             overflow: hidden;
         }
-
         .app-container {
             display: flex;
-            flex-direction: column;
-            /* 始終保持「上下」垂直佈局 */
+            flex-direction: column; /* 始終保持「上下」垂直佈局 */
             height: 100%;
             width: 100%;
             max-width: 1000px;
             margin: 0 auto;
             background-color: var(--app-bg-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-
         .results-panel {
             flex-grow: 1;
             overflow-y: auto;
             padding: 20px;
             box-sizing: border-box;
         }
-
-        .results-panel h3 {
-            margin-top: 0;
-        }
-
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .results-table th,
-        .results-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .results-table thead {
-            background-color: #f2f2f2;
-        }
+        .results-panel h3 { margin-top: 0; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .results-table thead { background-color: #f2f2f2; }
 
         .keyboard-panel {
             flex-shrink: 0;
@@ -70,7 +48,6 @@
             overflow: hidden;
             box-sizing: border-box;
         }
-
         .input-display {
             border: 1px solid #ccc;
             background-color: #fff;
@@ -81,13 +58,11 @@
             min-height: 36px;
             border-radius: 4px;
         }
-
         .virtual-keyboard {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
         }
-
         .virtual-keyboard button {
             padding: 12px;
             font-size: 1.3em;
@@ -96,7 +71,7 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-
+        
         .panel-toggle {
             position: absolute;
             top: -1px;
@@ -113,57 +88,42 @@
             justify-content: center;
             align-items: center;
         }
-
         .panel-toggle svg {
             width: 20px;
             height: 20px;
             transition: transform 0.3s ease-in-out;
         }
-
         .keyboard-panel.is-collapsed {
             height: 0 !important;
             padding: 0;
             border-top-width: 0;
             overflow: hidden;
         }
-
         .keyboard-panel.is-collapsed .panel-toggle svg {
             transform: rotate(180deg);
         }
-
         .keyboard-panel.is-collapsed .panel-toggle {
             border: none;
             background-color: transparent;
         }
     </style>
 </head>
-
 <body>
     <div id="app" class="app-container">
         <div class="results-panel">
             <h3>Quick Quote Results</h3>
             <table class="results-table">
                 <thead>
-                    <tr>
-                        <th>W</th>
-                        <th>H</th>
-                        <th>TYPE</th>
-                        <th>Price</th>
-                    </tr>
+                    <tr><th>W</th><th>H</th><th>TYPE</th><th>Price</th></tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td colspan="4" style="color: #888;">Please enter dimensions to begin...</td>
-                    </tr>
+                    <tr><td colspan="4" style="color: #888;">Please enter dimensions to begin...</td></tr>
                 </tbody>
             </table>
         </div>
         <div class="keyboard-panel" id="keyboard-panel">
             <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </div>
             <div class="input-display" id="input-display"></div>
             <div class="virtual-keyboard" id="virtual-keyboard">
@@ -178,5 +138,4 @@
     </div>
     <script type="module" src="./04-core-code/main.js"></script>
 </body>
-
 </html>
