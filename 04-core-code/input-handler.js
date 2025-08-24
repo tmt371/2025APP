@@ -13,16 +13,16 @@ export class InputHandler {
      * 初始化所有事件監聽器
      */
     initialize() {
-        this._setupPanelToggle();
-        this._setupKeyboard();
-        this._setupKeyboardSwitcher(); // [新增] 初始化鍵盤切換器
+        this._setupNumericKeyboardPanel();
+        this._setupFunctionPanel();
         console.log("InputHandler initialized and listeners are active.");
     }
 
-    _setupPanelToggle() {
+    // 設定數字鍵盤面板的收合/展開功能
+    _setupNumericKeyboardPanel() {
         const toggleButton = document.getElementById('panel-toggle');
-        const keyboardPanel = document.getElementById('keyboard-panel');
-
+        const keyboardPanel = document.getElementById('numeric-keyboard-panel');
+        
         if (toggleButton && keyboardPanel) {
             toggleButton.addEventListener('click', () => {
                 keyboardPanel.classList.toggle('is-collapsed');
@@ -30,31 +30,30 @@ export class InputHandler {
         }
     }
 
-    // [修改] 將此方法改名為 _setupKeyboard 以涵蓋所有鍵盤
-    _setupKeyboard() {
-        const flipper = document.getElementById('keyboard-flipper');
-        if (flipper) {
-            flipper.addEventListener('click', (event) => {
+    // 設定功能鍵盤面板的顯示/隱藏功能
+    _setupFunctionPanel() {
+        // 我們需要在數字鍵盤上找到那個觸發按鈕
+        const numericKeyboard = document.getElementById('numeric-keyboard');
+        const functionPanel = document.getElementById('function-panel');
+
+        if (numericKeyboard && functionPanel) {
+            numericKeyboard.addEventListener('click', (event) => {
                 const button = event.target.closest('button');
                 if (!button) return;
 
                 const key = button.dataset.key;
+
+                // 如果點擊的是功能鍵盤開關
+                if (key === 'TOGGLE_FUNCTIONS') {
+                    functionPanel.classList.toggle('is-visible');
+                    return; // 結束，不發布按鍵事件
+                }
+                
+                // 如果是其他按鍵，則發布通用按鍵事件
                 if (key) {
                     console.log(`Key pressed: ${key}`);
-                    this.eventAggregator.publish('virtualKeyPressed', { key });
+                    this.eventAggregator.publish('numericKeyPressed', { key });
                 }
-            });
-        }
-    }
-    
-    // [新增] 設定左右滑動切換鍵盤的功能
-    _setupKeyboardSwitcher() {
-        const switcherButton = document.getElementById('keyboard-switcher');
-        const flipper = document.getElementById('keyboard-flipper');
-
-        if (switcherButton && flipper) {
-            switcherButton.addEventListener('click', () => {
-                flipper.classList.toggle('show-functions');
             });
         }
     }
