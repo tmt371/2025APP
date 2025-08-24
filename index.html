@@ -42,11 +42,10 @@
             flex-shrink: 0;
             background-color: var(--keyboard-bg-color);
             border-top: 1px solid var(--panel-border-color);
-            /* [修改] 增加頂部內邊距，為按鈕騰出空間 */
-            padding: 30px 15px 15px 15px; 
+            padding: 15px;
             position: relative;
             transition: all 0.3s ease-in-out;
-            overflow: hidden;
+            overflow: hidden; /* 隱藏鍵盤內容，但不影響絕對定位的按鈕 */
             box-sizing: border-box;
         }
         .input-display {
@@ -73,14 +72,13 @@
             background-color: #fff;
         }
         
-        /* [修改] 調整箭頭按鈕的定位方式，使其在容器內部 */
         .panel-toggle {
             position: absolute;
-            top: 5px; /* 從頂部向下 5px */
+            top: 5px;
             left: 50%;
-            transform: translateX(-50%); /* 只需水平置中 */
+            transform: translateX(-50%);
             width: 80px;
-            height: 20px; /* 縮小一點高度 */
+            height: 20px;
             border: 1px solid #ccc;
             background-color: #fff;
             border-radius: 10px;
@@ -88,54 +86,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 10; /* 確保按鈕在最上層 */
         }
         .panel-toggle svg {
             width: 20px;
             height: 20px;
             transition: transform 0.3s ease-in-out;
         }
-        .keyboard-panel.is-collapsed {
-            height: 0 !important;
-            padding: 0;
-            border-top-width: 0;
-            overflow: hidden;
-        }
-        .keyboard-panel.is-collapsed .panel-toggle svg {
-            transform: rotate(180deg);
-        }
-        .keyboard-panel.is-collapsed .panel-toggle {
-           /* 在收合時可以不需要特殊樣式 */
-        }
-    </style>
-</head>
-<body>
-    <div id="app" class="app-container">
-        <div class="results-panel">
-            <h3>Quick Quote Results</h3>
-            <table class="results-table">
-                <thead>
-                    <tr><th>W</th><th>H</th><th>TYPE</th><th>Price</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="4" style="color: #888;">Please enter dimensions to begin...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="keyboard-panel" id="keyboard-panel">
-            <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
-            </div>
-            <div class="input-display" id="input-display"></div>
-            <div class="virtual-keyboard" id="virtual-keyboard">
-                <button data-key="1">1</button> <button data-key="2">2</button> <button data-key="3">3</button>
-                <button data-key="4">4</button> <button data-key="5">5</button> <button data-key="6">6</button>
-                <button data-key="7">7</button> <button data-key="8">8</button> <button data-key="9">9</button>
-                <button data-key="W">W</button> <button data-key="0">0</button> <button data-key="H">H</button>
-                <button data-key="DEL" style="grid-column: 1 / 3;">DELETE</button>
-                <button data-key="ENT">ENTER</button>
-            </div>
-        </div>
-    </div>
-    <script type="module" src="./04-core-code/main.js"></script>
-</body>
-</html>
+        
+        /* [修改] 鍵盤收合後的樣
