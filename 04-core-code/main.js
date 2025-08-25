@@ -9,10 +9,13 @@ class App {
     constructor() {
         console.log("Application starting...");
 
+        // [修改] 更新初始狀態
         const initialState = {
             ui: {
                 currentView: 'QUICK_QUOTE',
-                inputValue: '', // 用於顯示在輸入框的當前數值
+                inputValue: '',      // 用於顯示在輸入框的當前數值
+                inputMode: 'width',  // 初始模式為輸入寬度
+                activeRowIndex: null // 當前活動的行索引
             },
             quoteData: {
                 rollerBlindItems: [],
@@ -26,16 +29,13 @@ class App {
     }
 
     run() {
-        // [重要修改] 讓 UIManager 訂閱 stateChanged 事件
-        // 這樣一來，每當大腦(State)有任何變化，臉孔(UI)都會自動更新
         this.eventAggregator.subscribe('stateChanged', (state) => {
             this.uiManager.render(state);
         });
 
-        // 初始渲染
-        this.uiManager.render(this.stateManager.getState());
+        // 觸發一次初始渲染
+        this.eventAggregator.publish('stateChanged', this.stateManager.getState());
         
-        // 初始化輸入監聽器
         this.inputHandler.initialize(); 
 
         console.log("Application running and interactive.");
