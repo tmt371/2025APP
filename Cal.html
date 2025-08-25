@@ -44,10 +44,13 @@
         .key-function {
             background-color: #e5e7eb;
         }
-        /* [新增] 讓 Enter 鍵橫跨兩行 */
+        /* [修改] Enter 鍵的樣式 */
         .key-enter {
-            grid-row: span 2;
+            grid-row: span 2; /* 佔據兩行的高度 */
             background-color: #e5e7eb;
+            font-weight: bold; /* 加粗 */
+            font-size: 2.2em; /* 放大符號 */
+            padding-bottom: 25px; /* 微調符號垂直位置 */
         }
     </style>
 </head>
@@ -68,17 +71,12 @@
             <button data-key="1">1</button>
             <button data-key="2">2</button>
             <button data-key="3">3</button>
-            <button data-key="ENT" class="key-enter">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1.5em; height: 1.5em;">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-                </svg>
-            </button>
+            <button data-key="ENT" class="key-enter">&#8629;</button>
             
             <button data-key="0" class="key-zero">0</button>
             <button data-key="DEL">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.2em; height: 1.2em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg>
             </button>
-            
         </div>
     </div>
 
