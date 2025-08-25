@@ -44,8 +44,10 @@
             flex-shrink: 0;
             background-color: var(--keyboard-bg-color);
             border-top: 1px solid var(--panel-border-color);
-            padding: 15px;
-            padding-top: 35px; /* 為頂部按鈕留出空間 */
+            padding-top: 35px;
+            padding-bottom: 15px;
+            padding-left: 15px;
+            padding-right: 15px;
             position: relative;
             transition: all 0.3s ease-in-out;
             box-sizing: border-box;
@@ -79,23 +81,30 @@
             cursor: pointer; display: flex; justify-content: center; align-items: center;
             z-index: 10;
         }
-        .panel-toggle svg {
+        
+        /* [新增] 箭頭圖示樣式 */
+        .panel-toggle .toggle-arrow {
             width: 20px; height: 20px;
-            transition: transform 0.3s ease-in-out;
+            transition: opacity 0.3s ease-in-out;
+            position: absolute; /* 讓兩個箭頭重疊 */
         }
         
-        /* [修改] 數字鍵盤收合後的正確樣式 */
+        /* 預設狀態 (鍵盤展開時)，顯示向下箭頭，隱藏向上箭頭 */
+        .keyboard-panel .arrow-down { opacity: 1; }
+        .keyboard-panel .arrow-up { opacity: 0; }
+
+        /* is-collapsed 狀態 (鍵盤收合時)，隱藏向下箭頭，顯示向上箭頭 */
+        .keyboard-panel.is-collapsed .arrow-down { opacity: 0; }
+        .keyboard-panel.is-collapsed .arrow-up { opacity: 1; }
+        
         .keyboard-panel.is-collapsed {
-            height: 30px; /* 收合到一個固定的「把手」高度 */
+            height: 30px;
             padding: 0;
             border-top-width: 1px;
         }
         .keyboard-panel.is-collapsed .panel-toggle {
-            top: 50%; /* 讓按鈕在把手上垂直置中 */
+            top: 50%;
             transform: translateX(-50%) translateY(-50%);
-        }
-        .keyboard-panel.is-collapsed .panel-toggle svg {
-            transform: rotate(180deg);
         }
         .keyboard-panel.is-collapsed .input-display,
         .keyboard-panel.is-collapsed .virtual-keyboard {
@@ -163,7 +172,8 @@
 
         <div class="keyboard-panel" id="numeric-keyboard-panel">
             <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-l-7.5 7.5-7.5-7.5" /></svg>
+                <svg class="toggle-arrow arrow-down" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg class="toggle-arrow arrow-up" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
             </div>
             <div class="input-display" id="input-display"></div>
             <div class="virtual-keyboard" id="numeric-keyboard">
