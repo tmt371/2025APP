@@ -26,7 +26,7 @@
             margin: 0 auto;
             background-color: var(--app-bg-color);
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            position: relative; /* 設為絕對定位的基準 */
+            position: relative;
             overflow: hidden;
         }
         .results-panel {
@@ -57,12 +57,11 @@
         }
         .virtual-keyboard {
             display: grid;
-            /* [修改] 數字鍵盤改為4欄佈局 */
             grid-template-columns: repeat(4, 1fr);
             gap: 8px;
         }
         .virtual-keyboard button {
-            padding: 12px 5px; /* 微調padding以容納更多按鍵 */
+            padding: 12px 5px;
             font-size: 1.3em;
             cursor: pointer;
             border-radius: 4px;
@@ -77,6 +76,7 @@
             border: 1px solid var(--panel-border-color); border-bottom: none;
             background-color: var(--keyboard-bg-color); border-radius: 8px 8px 0 0;
             cursor: pointer; display: flex; justify-content: center; align-items: center;
+            z-index: 30;
         }
         .panel-toggle svg {
             width: 20px; height: 20px;
@@ -86,25 +86,26 @@
             height: 0 !important;
             padding: 0; border-top-width: 0; overflow: hidden;
         }
+        /* [修正] 移除 'display: none'，讓按鈕在收合時依然可見 */
         .keyboard-panel.is-collapsed .panel-toggle {
-            display: none; /* 收合時也隱藏這個按鈕 */
+            background-color: var(--app-bg-color);
+        }
+        .keyboard-panel.is-collapsed .panel-toggle svg {
+            transform: rotate(180deg);
         }
 
-        /* [新增] 第三層：功能鍵盤面板 */
         .function-panel {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #e9eef5; /* 使用不同的底色以區分 */
+            bottom: 0; left: 0; right: 0;
+            background-color: #e9eef5;
             border-top: 1px solid var(--panel-border-color);
             padding: 15px;
-            z-index: 20; /* 確保在最上層 */
-            transform: translateY(100%); /* 預設隱藏在螢幕下方 */
+            z-index: 20;
+            transform: translateY(100%);
             transition: transform 0.3s ease-in-out;
         }
         .function-panel.is-visible {
-            transform: translateY(0%); /* 顯示時滑入畫面 */
+            transform: translateY(0%);
         }
         .function-keyboard {
             display: grid;
@@ -140,10 +141,10 @@
                 <button data-key="TOGGLE_FUNCTIONS" title="Function Keys">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.5em; height:1.5em;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg>
                 </button>
-                <button data-key="0" style="grid-column: 1 / 3;">0</button>
-                <button data-key="DEL">
+                <button data-key="DEL" style="grid-column: 1 / 3;">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.5em; height: 1.5em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg>
                 </button>
+                <button data-key="0">0</button>
                 <button data-key="ENT">ENT</button>
             </div>
         </div>
