@@ -3,7 +3,6 @@
 export class UIManager {
     constructor(appElement, eventAggregator) {
         this.appElement = appElement;
-        // 我們現在可以直接在建構函式中找到需要的元素
         this.inputDisplay = document.getElementById('input-display');
         this.resultsTableBody = document.querySelector('.results-table tbody');
         this.eventAggregator = eventAggregator;
@@ -20,25 +19,31 @@ export class UIManager {
     }
 
     _renderQuickQuoteView(state) {
-        // [修改] 更新輸入框的顯示
         if (this.inputDisplay) {
             this.inputDisplay.textContent = state.ui.inputValue || '';
         }
 
-        // [修改] 更新結果表格
+        // [修改] 渲染表格時加入高亮邏輯
         if (this.resultsTableBody) {
-            if (state.quoteData.rollerBlindItems.length === 0) {
+            const { rollerBlindItems } = state.quoteData;
+            const { activeCell } = state.ui;
+
+            if (rollerBlindItems.length === 0) {
                 this.resultsTableBody.innerHTML = `<tr><td colspan="4" style="color: #888;">Please enter dimensions to begin...</td></tr>`;
             } else {
-                // 根據數據生成表格的每一行，現在是四個獨立的儲存格
-                this.resultsTableBody.innerHTML = state.quoteData.rollerBlindItems.map(item => `
-                    <tr>
-                        <td>${item.width || ''}</td>
-                        <td>${item.height || ''}</td>
-                        <td>${item.fabricType || ''}</td>
-                        <td class="text-right">${item.linePrice ? '$' + item.linePrice.toFixed(2) : ''}</td>
-                    </tr>
-                `).join('');
+                this.resultsTableBody.innerHTML = rollerBlindItems.map((item, index) => {
+                    const isWHighlighted = index === activeCell.rowIndex && activeCell.column === 'width';
+                    const isHHighlighted = index === activeCell.rowIndex && activeCell.column === 'height';
+                    
+                    return `
+                        <tr>
+                            <td class="${isWHighlighted ? 'highlighted-cell' : ''}">${item.width || ''}</td>
+                            <td class="${isHHighlighted ? 'highlighted-cell' : ''}">${item.height || ''}</td>
+                            <td>${item.fabricType || ''}</td>
+                            <td class="text-right">${item.linePrice ? '$' + item.linePrice.toFixed(2) : ''}</td>
+                        </tr>
+                    `;
+                }).join('');
             }
         }
     }
