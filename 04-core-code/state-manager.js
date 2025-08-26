@@ -23,7 +23,6 @@ export class StateManager {
     getState() { return this.state; }
 
     _handleNumericKeyPress(key) {
-        // ... 此部分邏輯與上一版幾乎相同 ...
         const isNumber = !isNaN(parseInt(key));
         if (isNumber) this.state.ui.inputValue += key;
         if (key === 'DEL') this.state.ui.inputValue = this.state.ui.inputValue.slice(0, -1);
@@ -34,22 +33,20 @@ export class StateManager {
         this.eventAggregator.publish('stateChanged', this.state);
     }
 
-    // [新增] 處理表格儲存格點擊
     _handleTableCellClick({ rowIndex, column }) {
         const item = this.state.quoteData.rollerBlindItems[rowIndex];
         if (!item) return;
 
-        // 處理 W 和 H 點擊
         if (column === 'width' || column === 'height') {
             this.state.ui.inputMode = column;
             this.state.ui.activeCell = { rowIndex, column };
-            this.state.ui.isEditing = true; // 進入編輯模式
-            this.state.ui.inputValue = item[column] || ''; // 將現有值載入輸入框
+            this.state.ui.isEditing = true;
+            // [修正] 確保載入的數值為字串，以便刪除鍵可以立即作用
+            this.state.ui.inputValue = String(item[column] || '');
         }
 
-        // 處理 TYPE 點擊
         if (column === 'TYPE') {
-            if (!item.width && !item.height) return; // 寬高皆為空，不執行
+            if (!item.width && !item.height) return;
             const currentType = item.fabricType;
             const currentIndex = TYPE_SEQUENCE.indexOf(currentType);
             const nextIndex = (currentIndex + 1) % TYPE_SEQUENCE.length;
@@ -59,20 +56,17 @@ export class StateManager {
         this.eventAggregator.publish('stateChanged', this.state);
     }
 
-    // [新增] 處理表頭點擊
     _handleTableHeaderClick({ column }) {
         if (column === 'TYPE') {
             const items = this.state.quoteData.rollerBlindItems;
             if (items.length === 0) return;
             
-            // 決定下一個批次設定的類型
-            const firstItemType = items[0].fabricType;
+            const firstItemType = items[0].fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1]; // Handle initial null case
             const currentIndex = TYPE_SEQUENCE.indexOf(firstItemType);
             const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
 
-            // 批次更新所有項目
             items.forEach(item => {
-                if (item.width || item.height) { // 只更新有尺寸的行
+                if (item.width || item.height) {
                     item.fabricType = nextType;
                 }
             });
@@ -80,13 +74,14 @@ export class StateManager {
         }
     }
     
-    // [修改] 提交數值的核心邏輯
     _commitValue() {
         const { inputValue, inputMode, activeCell, isEditing } = this.state.ui;
-        const value = parseInt(inputValue, 10);
+        // 如果輸入框為空，則將值視為 null
+        const value = inputValue === '' ? null : parseInt(inputValue, 10);
         
         const rule = VALIDATION_RULES[inputMode];
-        if (inputValue && (isNaN(value) || value < rule.min || value > rule.max)) {
+        // 只有在輸入框不為空時，才進行範圍驗證
+        if (value !== null && (isNaN(value) || value < rule.min || value > rule.max)) {
             this.eventAggregator.publish('showNotification', { message: `${rule.name} must be between ${rule.min} and ${rule.max}.` });
             this.state.ui.inputValue = '';
             return;
@@ -95,24 +90,25 @@ export class StateManager {
         const items = this.state.quoteData.rollerBlindItems;
         const targetItem = items[activeCell.rowIndex];
         if (targetItem) {
-            targetItem[inputMode] = value || null; // 如果為空則存儲null
-        }
-
-        if (isEditing) {
-            this.state.ui.isEditing = false; // 退出編輯模式
-        } else if (activeCell.rowIndex === items.length - 1 && (targetItem.width || targetItem.height)) {
-            // 如果是在最後一行輸入，且該行已有數據，則自動新增
-            items.push({ itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null });
+            targetItem[inputMode] = value;
         }
         
-        this.state.ui.inputValue = '';
-        this._changeInputMode(inputMode); // 重新尋找下一個目標
+        // [新增] 提交數值後，對整個表格狀態進行驗證
+        if (this._validateTableState()) {
+            if (isEditing) {
+                this.state.ui.isEditing = false;
+            } else if (activeCell.rowIndex === items.length - 1 && (targetItem.width || targetItem.height)) {
+                items.push({ itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null });
+            }
+            
+            this.state.ui.inputValue = '';
+            this._changeInputMode(inputMode);
+        }
     }
 
-    // [修改] 改變輸入模式並尋找焦點
     _changeInputMode(mode) {
         this.state.ui.inputMode = mode;
-        this.state.ui.isEditing = false; // 切換模式時，總是退出編輯模式
+        this.state.ui.isEditing = false;
         const items = this.state.quoteData.rollerBlindItems;
         let found = false;
         for (let i = 0; i < items.length; i++) {
@@ -125,5 +121,24 @@ export class StateManager {
         if (!found) {
             this.state.ui.activeCell = { rowIndex: items.length - 1, column: mode };
         }
+    }
+
+    // [新增] 驗證表格狀態，不允許中間有空行
+    _validateTableState() {
+        const items = this.state.quoteData.rollerBlindItems;
+        // 我們只檢查到倒數第二行，因為最後一行本來就可能是空的
+        for (let i = 0; i < items.length - 1; i++) {
+            const item = items[i];
+            // 如果某一行的寬和高都為空 (null 或 0 都算空)
+            if (!item.width && !item.height) {
+                this.eventAggregator.publish('showNotification', {
+                    message: `Row ${i + 1} is empty. Please fill in the dimensions or delete the row.`
+                });
+                // 將焦點移回這個問題行
+                this.state.ui.activeCell = { rowIndex: i, column: 'width' };
+                return false; // 驗證失敗
+            }
+        }
+        return true; // 驗證成功
     }
 }
