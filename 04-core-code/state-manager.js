@@ -8,9 +8,11 @@ const VALIDATION_RULES = {
 const TYPE_SEQUENCE = ['BO', 'BO1', 'SN'];
 
 export class StateManager {
-    constructor(initialState, eventAggregator) {
+    // [修改] 建構函式現在需要接收 priceCalculator 的實例
+    constructor(initialState, eventAggregator, priceCalculator) {
         this.state = initialState;
         this.eventAggregator = eventAggregator;
+        this.priceCalculator = priceCalculator; // 將計算器的引用儲存起來
         this.initialize();
     }
 
@@ -69,8 +71,14 @@ export class StateManager {
                     item.fabricType = nextType;
                 }
             });
-            this.eventAggregator.publish('stateChanged', this.state);
         }
+        
+        // [新增] 處理 Price 表頭的點擊
+        if (column === 'Price') {
+            this._calculateAllPrices();
+        }
+
+        this.eventAggregator.publish('stateChanged', this.state);
     }
     
     _commitValue() {
@@ -127,14 +135,28 @@ export class StateManager {
                 this.eventAggregator.publish('showNotification', {
                     message: `Row ${i + 1} is empty. Please fill in the dimensions or delete the row.`
                 });
-                
-                // [修正] 當驗證失敗時，除了移動焦點，還要強制重置輸入模式
                 this.state.ui.activeCell = { rowIndex: i, column: 'width' };
-                this.state.ui.inputMode = 'width'; // <--- 核心修正點
-                
+                this.state.ui.inputMode = 'width';
                 return false;
             }
         }
         return true;
+    }
+
+    // [新增] 遍歷所有項目並觸發價格計算的核心方法
+    _calculateAllPrices() {
+        const items = this.state.quoteData.rollerBlindItems;
+        
+        items.forEach(item => {
+            // 直接呼叫 priceCalculator 實例的方法來計算價格
+            const newPrice = this.priceCalculator.calculateRollerBlindPrice(item);
+            
+            // 只有在成功計算出價格時才更新
+            if (newPrice !== null) {
+                item.linePrice = newPrice;
+            }
+        });
+
+        console.log("All prices recalculated.");
     }
 }
