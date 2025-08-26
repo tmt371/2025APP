@@ -3,14 +3,28 @@
 export class UIManager {
     constructor(appElement, eventAggregator) {
         this.appElement = appElement;
+        this.eventAggregator = eventAggregator;
+
+        // --- [修改] 統一獲取所有需要操作的 DOM 元素 ---
         this.inputDisplay = document.getElementById('input-display');
         this.resultsTableBody = document.querySelector('.results-table tbody');
-        
-        // --- [新增] 獲取總價顯示區的 DOM 元素 ---
         this.totalSumValueElement = document.getElementById('total-sum-value');
-        
-        this.eventAggregator = eventAggregator;
+        this.numericKeyboardPanel = document.getElementById('numeric-keyboard-panel');
+        this.functionPanel = document.getElementById('function-panel');
+
+        this.initialize(); // --- [新增] 呼叫初始化方法 ---
     }
+
+    // --- [新增開始] ---
+    /**
+     * 初始化 UIManager，主要用於訂閱事件
+     */
+    initialize() {
+        // 訂閱面板切換事件
+        this.eventAggregator.subscribe('userToggledNumericKeyboard', () => this._toggleNumericKeyboard());
+        this.eventAggregator.subscribe('userToggledFunctionKeyboard', () => this._toggleFunctionKeyboard());
+    }
+    // --- [新增結束] ---
 
     render(state) {
         if (state.ui.currentView === 'QUICK_QUOTE') {
@@ -55,20 +69,34 @@ export class UIManager {
             }
         }
 
-        // --- [新增開始] ---
         // 更新總價顯示區
         if (this.totalSumValueElement) {
-            // 安全地從 state 中獲取 totalSum
             const totalSum = state.quoteData.summary ? state.quoteData.summary.totalSum : null;
-
             if (typeof totalSum === 'number') {
-                // 如果 totalSum 是一個數字，則格式化並顯示
                 this.totalSumValueElement.textContent = `$${totalSum.toFixed(2)}`;
             } else {
-                // 否則 (為 null 或 undefined)，清空顯示
                 this.totalSumValueElement.textContent = '';
             }
         }
-        // --- [新增結束] ---
     }
+
+    // --- [新增開始] ---
+    /**
+     * 切換底部數字鍵盤的摺疊/展開狀態
+     */
+    _toggleNumericKeyboard() {
+        if (this.numericKeyboardPanel) {
+            this.numericKeyboardPanel.classList.toggle('is-collapsed');
+        }
+    }
+
+    /**
+     * 切換右側功能鍵盤的滑出/滑入狀態
+     */
+    _toggleFunctionKeyboard() {
+        if (this.functionPanel) {
+            this.functionPanel.classList.toggle('is-expanded');
+        }
+    }
+    // --- [新增結束] ---
 }
