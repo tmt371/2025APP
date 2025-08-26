@@ -8,7 +8,7 @@ export class InputHandler {
     initialize() {
         this._setupNumericKeyboardPanelToggle();
         this._setupNumericKeyboard();
-        this._setupFunctionPanelToggle(); // [修改] 改為監聽新的功能面板開關
+        this._setupFunctionPanelToggle(); // [還原] 初始化功能面板開關
         console.log("InputHandler initialized and listeners are active.");
     }
 
@@ -23,7 +23,6 @@ export class InputHandler {
         }
     }
 
-    // [修改] 此方法現在只監聽數字鍵盤
     _setupNumericKeyboard() {
         const numericKeyboard = document.getElementById('numeric-keyboard');
         if (numericKeyboard) {
@@ -40,7 +39,7 @@ export class InputHandler {
         }
     }
 
-    // [修改] 設定獨立的功能面板開關
+    // [還原] 設定獨立的功能面板開關
     _setupFunctionPanelToggle() {
         const toggleButton = document.getElementById('function-panel-toggle');
         const functionPanel = document.getElementById('function-panel');
