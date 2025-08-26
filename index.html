@@ -9,6 +9,7 @@
             --panel-border-color: #d1d5db;
             --keyboard-bg-color: #f3f4f6;
             --app-bg-color: #ffffff;
+            --highlight-color: #a0d3e8; /* 水藍色 */
         }
         html, body {
             height: 100%;
@@ -26,8 +27,6 @@
             margin: 0 auto;
             background-color: var(--app-bg-color);
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
         }
         .results-panel {
             flex-grow: 1;
@@ -37,24 +36,27 @@
         }
         .results-panel h3 { margin-top: 0; }
         .results-table { width: 100%; border-collapse: collapse; }
-        .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: center; transition: background-color 0.3s; }
         .results-table thead { background-color: #f2f2f2; }
+        
+        /* [新增] 高亮儲存格的樣式 */
+        .results-table td.highlighted-cell {
+            background-color: var(--highlight-color);
+        }
 
         .keyboard-panel {
             flex-shrink: 0;
             background-color: var(--keyboard-bg-color);
             border-top: 1px solid var(--panel-border-color);
             padding: 15px;
-            padding-top: 35px;
             position: relative;
             transition: all 0.3s ease-in-out;
+            overflow: hidden;
             box-sizing: border-box;
         }
-        .input-display, .virtual-keyboard {
-            transition: opacity 0.2s, visibility 0.2s;
-        }
         .input-display {
-            border: 1px solid #ccc; background-color: #fff;
+            border: 1px solid #ccc;
+            background-color: #fff;
             padding: 10px; font-size: 1.8em; text-align: right;
             margin-bottom: 15px; min-height: 36px; border-radius: 4px;
         }
@@ -69,7 +71,6 @@
             display: flex; justify-content: center; align-items: center;
             font-weight: 500;
         }
-        
         .panel-toggle {
             position: absolute;
             top: 5px;
@@ -104,60 +105,9 @@
             visibility: hidden;
             opacity: 0;
         }
-
-        .function-panel {
-            position: absolute;
-            top: 0; right: 0; bottom: 0;
-            width: 250px;
-            background-color: #e9eef5;
-            border-left: 1px solid var(--panel-border-color);
-            z-index: 20;
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
-            display: flex;
-            align-items: center;
-        }
-        .function-panel.is-visible {
-            transform: translateX(0%);
-        }
-        .function-panel-toggle {
-            position: absolute;
-            left: 0; top: 50%;
-            transform: translateX(-100%) translateY(-50%);
-            width: 25px; height: 80px;
-            border: 1px solid var(--panel-border-color); border-right: none;
-            background-color: #e9eef5;
-            border-radius: 8px 0 0 8px;
-            cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .function-panel-toggle svg {
-            width: 20px; height: 20px;
-            transition: transform 0.3s ease-in-out;
-        }
-        .function-panel.is-visible .function-panel-toggle svg {
-            transform: rotate(180deg);
-        }
-        .function-keyboard {
-            width: 100%;
-            padding: 15px;
-            box-sizing: border-box;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-        .function-keyboard button {
-            padding: 15px 5px; font-size: 1.1em;
-            cursor: pointer; border-radius: 4px;
-            border: 1px solid #ccc; background-color: #fff;
-        }
         
-        .key-zero {
-            grid-column: span 2;
-        }
-        .key-function {
-            background-color: #e5e7eb;
-        }
+        .key-zero { grid-column: span 2; }
+        .key-function { background-color: #e5e7eb; }
         .key-enter {
             grid-row: span 2;
             background-color: #e5e7eb;
@@ -173,50 +123,24 @@
             <h3>Quick Quote Results</h3>
             <table class="results-table">
                 <thead><tr><th>W</th><th>H</th><th>TYPE</th><th>Price</th></tr></thead>
-                <tbody><tr><td colspan="4" style="color: #888;">Please enter dimensions to begin...</td></tr></tbody>
+                <tbody>
+                    </tbody>
             </table>
         </div>
-
         <div class="keyboard-panel" id="numeric-keyboard-panel">
             <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
                 <svg class="toggle-arrow arrow-down" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
                 <svg class="toggle-arrow arrow-up" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
             </div>
             <div class="input-display" id="input-display"></div>
-            
             <div class="virtual-keyboard" id="numeric-keyboard">
-                <button data-key="7">7</button>
-                <button data-key="8">8</button>
-                <button data-key="9">9</button>
-                <button data-key="W" class="key-function">W</button>
-
-                <button data-key="4">4</button>
-                <button data-key="5">5</button>
-                <button data-key="6">6</button>
-                <button data-key="H" class="key-function">H</button>
-                
-                <button data-key="1">1</button>
-                <button data-key="2">2</button>
-                <button data-key="3">3</button>
-                <button data-key="ENT" class="key-enter">&#8629;</button>
-                
+                <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button data-key="W" class="key-function">W</button>
+                <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key="H" class="key-function">H</button>
+                <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-key="ENT" class="key-enter">&#8629;</button>
                 <button data-key="0" class="key-zero">0</button>
                 <button data-key="DEL">
-                    <svg xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.2em; height: 1.2em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.2em; height: 1.2em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg>
                 </button>
-                </div>
-        </div>
-
-        <div class="function-panel" id="function-panel">
-            <div class="function-panel-toggle" id="function-panel-toggle" title="Toggle Function Panel">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-            </div>
-            <div class="function-keyboard">
-                <button data-key="INSERT_BLIND">Insert Blind</button>
-                <button data-key="APPEND_BLIND">Append Blind</button>
-                <button data-key="DELETE_BLIND">Delete Blind</button>
-                <button data-key="MAKE_QUOTE">Make Quote</button>
-                <button data-key="NEXT_STAGE">Next Stage</button>
             </div>
         </div>
     </div>
