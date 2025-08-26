@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotation App v0.3</title>
-    <style>
+    <title>Quotation App v0.3.1</title> <style>
         :root {
             --panel-border-color: #d1d5db;
             --keyboard-bg-color: #f3f4f6;
@@ -53,7 +52,7 @@
         .keyboard-panel {
             flex-shrink: 0; background-color: var(--keyboard-bg-color);
             border-top: 1px solid var(--panel-border-color);
-            padding: 15px; padding-top: 35px; /* 恢復把手的空間 */
+            padding: 15px; padding-top: 35px;
             position: relative; transition: all 0.3s ease-in-out;
             box-sizing: border-box;
         }
@@ -69,14 +68,22 @@
         .function-keys {
             flex: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
         }
-        .virtual-keyboard, .function-keys { transition: opacity 0.2s, visibility 0.2s; }
+        
+        /* --- [修正] 恢復數字鍵盤的 grid 佈局 --- */
+        .virtual-keyboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .virtual-keyboard, .function-keys, .input-display { transition: opacity 0.2s, visibility 0.2s; }
+        
         .virtual-keyboard button, .function-keys button {
             padding: 12px 5px; font-size: 1.3em;
             cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background-color: #fff;
             display: flex; justify-content: center; align-items: center; font-weight: 500;
         }
         
-        /* --- [恢復] 底部數字鍵盤的摺疊功能 CSS --- */
         .panel-toggle {
             position: absolute; top: 5px; left: 50%;
             transform: translateX(-50%);
@@ -101,7 +108,6 @@
         .key-enter { grid-row: span 2; background-color: #e5e7eb; font-weight: bold; font-size: 2.2em; padding-bottom: 25px; }
         .key-sum { background-color: #dbeafe; font-weight: bold; color: #1e40af; }
 
-        /* --- [新增] 右側功能鍵盤的全新 CSS --- */
         #function-panel {
             position: fixed;
             top: 0;
@@ -198,22 +204,21 @@
                 <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key="H" class="key-function">H</button>
                 <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-key="ENT" class="key-enter">&#8629;</button>
                 <button data-key="0" class="key-zero">0</button>
-                <button data-key="DEL"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.2em; height: 1.2em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.92L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg></button>
+                <button data-key="DEL"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.2em; height: 1.2em;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12 12 14.25m-2.58 4.2L6.16 15.6a.75.75 0 0 1 0-1.06l4.19-4.19a.75.75 0 0 1 1.06 0l4.19 4.19a.75.75 0 0 1 0 1.06l-4.19 4.19a.75.75 0 0 1-1.06 0Z" /></svg></button>
             </div>
         </div>
     </div>
-
     <div id="function-panel">
         <div id="function-panel-toggle" title="Toggle Function Panel">
             <svg class="toggle-arrow arrow-left" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
             <svg class="toggle-arrow arrow-right" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
         </div>
         <div class="function-buttons">
-            <button id="key-insert">A-Insert</button>
-            <button id="key-delete">B-Delete</button>
-            <button id="key-f3">C-F3</button>
-            <button id="key-f4">D-F4</button>
-            <button id="key-f5">E-F5</button>
+            <button id="key-insert">Insert</button>
+            <button id="key-delete">Delete</button>
+            <button id="key-f3">F3</button>
+            <button id="key-f4">F4</button>
+            <button id="key-f5">F5</button>
         </div>
     </div>
     
