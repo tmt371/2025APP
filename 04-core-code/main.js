@@ -8,17 +8,19 @@ import { InputHandler } from './input-handler.js';
 class App {
     constructor() {
         console.log("Application starting...");
-
-        // [修改] 更新初始狀態
+        
+        // [修改] 更新初始狀態，加入 activeCell
         const initialState = {
             ui: {
                 currentView: 'QUICK_QUOTE',
-                inputValue: '',      // 用於顯示在輸入框的當前數值
-                inputMode: 'width',  // 初始模式為輸入寬度
-                activeRowIndex: null // 當前活動的行索引
+                inputValue: '',
+                inputMode: 'width',
+                activeCell: { rowIndex: 0, column: 'width' } // 初始焦點
             },
             quoteData: {
-                rollerBlindItems: [],
+                rollerBlindItems: [
+                    { itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null }
+                ],
             }
         };
 
@@ -29,8 +31,14 @@ class App {
     }
 
     run() {
+        // 監聽 stateChanged 事件，更新 UI
         this.eventAggregator.subscribe('stateChanged', (state) => {
             this.uiManager.render(state);
+        });
+
+        // [新增] 監聽 showNotification 事件，彈出警示
+        this.eventAggregator.subscribe('showNotification', (data) => {
+            alert(data.message);
         });
 
         // 觸發一次初始渲染
