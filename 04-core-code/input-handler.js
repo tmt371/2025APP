@@ -7,7 +7,7 @@ export class InputHandler {
 
     initialize() {
         this._setupNumericKeyboard();
-        this._setupTableInteraction(); // [新增]
+        this._setupTableInteraction();
     }
 
     _setupNumericKeyboard() {
@@ -24,7 +24,6 @@ export class InputHandler {
         }
     }
 
-    // [新增] 監聽表格的點擊
     _setupTableInteraction() {
         const table = document.getElementById('results-table');
         if (table) {
@@ -38,10 +37,9 @@ export class InputHandler {
                 const column = target.dataset.column;
                 
                 if (isHeader) {
-                    // 如果點擊的是表頭
+                    // [修改] 現在也會發布 Price 表頭的點擊事件
                     this.eventAggregator.publish('tableHeaderClicked', { column });
                 } else {
-                    // 如果點擊的是儲存格
                     const rowIndex = target.parentElement.dataset.rowIndex;
                     this.eventAggregator.publish('tableCellClicked', { 
                         rowIndex: parseInt(rowIndex, 10), 
