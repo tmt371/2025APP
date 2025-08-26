@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotation App v0.2</title>
+    <title>Quotation App v0.3</title>
     <style>
         :root {
             --panel-border-color: #d1d5db;
@@ -28,37 +28,19 @@
         .results-panel {
             flex-grow: 1; overflow-y: auto; padding: 20px; box-sizing: border-box;
         }
-        /* --- [新增] 標題與總價的容器 --- */
         .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px; /* 與下方表格的間距 */
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
         }
-        .results-header h3 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-        /* --- [新增] 總價顯示區的樣式 --- */
+        .results-header h3 { margin: 0; color: var(--primary-color); }
         .total-sum-container {
-            display: flex;
-            align-items: center;
-            border: 1px solid var(--panel-border-color);
-            padding: 5px 10px;
-            border-radius: 4px;
-            background-color: #f9fafb;
+            display: flex; align-items: center; border: 1px solid var(--panel-border-color);
+            padding: 5px 10px; border-radius: 4px; background-color: #f9fafb;
         }
-        .total-sum-container .label {
-            font-weight: bold;
-            margin-right: 8px;
-            color: #374151;
-        }
+        .total-sum-container .label { font-weight: bold; margin-right: 8px; color: #374151; }
         .total-sum-container .value {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: var(--medium-blue-color);
-            min-width: 80px; /* 給予一個最小寬度，避免內容變動時跳動 */
-            text-align: right;
+            font-size: 1.2em; font-weight: bold; color: var(--medium-blue-color);
+            min-width: 80px; text-align: right;
         }
         .results-table { width: 100%; border-collapse: collapse; }
         .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: center; transition: background-color 0.3s; }
@@ -71,59 +53,110 @@
         .keyboard-panel {
             flex-shrink: 0; background-color: var(--keyboard-bg-color);
             border-top: 1px solid var(--panel-border-color);
-            padding: 15px; padding-top: 15px; /* [修改] 移除頂部 panel-toggle 的空間 */
+            padding: 15px; padding-top: 35px; /* 恢復把手的空間 */
             position: relative; transition: all 0.3s ease-in-out;
             box-sizing: border-box;
         }
-
-        /* --- [新增] 新的 Flexbox 容器 --- */
         .input-area-container {
-            display: flex;
-            gap: 8px; /* 按鈕與顯示框之間的間距 */
-            margin-bottom: 15px; /* 與下方數字鍵盤的間距 */
-            align-items: stretch; /* 讓內部項目等高 */
+            display: flex; gap: 8px; margin-bottom: 15px; align-items: stretch;
         }
         .input-display {
             border: 1px solid #ccc; background-color: #fff;
             padding: 10px; font-size: 1.8em; text-align: right;
             border-radius: 4px; display: flex; align-items: center; justify-content: flex-end;
-            /* --- [修改] 使用 flex 調整空間佔比 --- */
             flex: 1.2;
         }
-        /* --- [新增] 新功能鍵的容器 --- */
         .function-keys {
-            flex: 3;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
+            flex: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
         }
-
-        .virtual-keyboard {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-        }
-        /* --- [修改] 讓所有按鈕共用樣式 --- */
-        .virtual-keyboard button,
-        .function-keys button {
+        .virtual-keyboard, .function-keys { transition: opacity 0.2s, visibility 0.2s; }
+        .virtual-keyboard button, .function-keys button {
             padding: 12px 5px; font-size: 1.3em;
             cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background-color: #fff;
             display: flex; justify-content: center; align-items: center; font-weight: 500;
         }
-
-        .panel-toggle { /* [註] 這個 toggle 功能暫時隱藏，若需要可恢復 */
-            display: none;
-        }
         
+        /* --- [恢復] 底部數字鍵盤的摺疊功能 CSS --- */
+        .panel-toggle {
+            position: absolute; top: 5px; left: 50%;
+            transform: translateX(-50%);
+            width: 80px; height: 20px;
+            border: 1px solid #ccc; background-color: #fff; border-radius: 10px;
+            cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 10;
+        }
+        .panel-toggle .toggle-arrow {
+            width: 20px; height: 20px; transition: opacity 0.3s ease-in-out; position: absolute;
+        }
+        .keyboard-panel .arrow-down { opacity: 1; }
+        .keyboard-panel .arrow-up { opacity: 0; }
+        .keyboard-panel.is-collapsed { height: 30px; padding: 0; border-top-width: 1px; }
+        .keyboard-panel.is-collapsed .panel-toggle { top: 50%; transform: translateX(-50%) translateY(-50%); }
+        .keyboard-panel.is-collapsed .arrow-down { opacity: 0; }
+        .keyboard-panel.is-collapsed .arrow-up { opacity: 1; }
+        .keyboard-panel.is-collapsed .input-area-container,
+        .keyboard-panel.is-collapsed .virtual-keyboard { visibility: hidden; opacity: 0; }
+
         .key-zero { grid-column: span 2; }
         .key-function { background-color: #e5e7eb; }
-        .key-enter {
-            grid-row: span 2; background-color: #e5e7eb;
-            font-weight: bold; font-size: 2.2em; padding-bottom: 25px;
+        .key-enter { grid-row: span 2; background-color: #e5e7eb; font-weight: bold; font-size: 2.2em; padding-bottom: 25px; }
+        .key-sum { background-color: #dbeafe; font-weight: bold; color: #1e40af; }
+
+        /* --- [新增] 右側功能鍵盤的全新 CSS --- */
+        #function-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 180px;
+            height: 100%;
+            background-color: #e5e7eb;
+            border-left: 1px solid var(--panel-border-color);
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        /* --- [新增] Sum 按鈕的特殊樣式 --- */
-        .key-sum {
-            background-color: #dbeafe; /* 淡藍色背景 */
-            font-weight: bold;
-            color: #1e40af; /* 深藍色文字 */
+        #function-panel.is-expanded {
+            transform: translateX(0);
+        }
+        #function-panel-toggle {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 80px;
+            background-color: #e5e7eb;
+            border: 1px solid var(--panel-border-color);
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #function-panel-toggle .toggle-arrow {
+            width: 24px; height: 24px; transition: opacity 0.3s; position: absolute;
+        }
+        #function-panel .arrow-left { opacity: 1; }
+        #function-panel .arrow-right { opacity: 0; }
+        #function-panel.is-expanded .arrow-left { opacity: 0; }
+        #function-panel.is-expanded .arrow-right { opacity: 1; }
+        .function-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 50px;
+        }
+        .function-buttons button {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1em;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -148,6 +181,10 @@
             </table>
         </div>
         <div class="keyboard-panel" id="numeric-keyboard-panel">
+            <div class="panel-toggle" id="panel-toggle" title="Toggle Keyboard">
+                <svg class="toggle-arrow arrow-down" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg class="toggle-arrow arrow-up" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+            </div>
             <div class="input-area-container">
                 <div class="input-display" id="input-display"></div>
                 <div class="function-keys">
@@ -156,7 +193,6 @@
                     <button id="key-sum" class="key-sum">Sum</button>
                 </div>
             </div>
-
             <div class="virtual-keyboard" id="numeric-keyboard">
                 <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button data-key="W" class="key-function">W</button>
                 <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key="H" class="key-function">H</button>
@@ -166,6 +202,21 @@
             </div>
         </div>
     </div>
+
+    <div id="function-panel">
+        <div id="function-panel-toggle" title="Toggle Function Panel">
+            <svg class="toggle-arrow arrow-left" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+            <svg class="toggle-arrow arrow-right" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        </div>
+        <div class="function-buttons">
+            <button id="key-insert">A-Insert</button>
+            <button id="key-delete">B-Delete</button>
+            <button id="key-f3">C-F3</button>
+            <button id="key-f4">D-F4</button>
+            <button id="key-f5">E-F5</button>
+        </div>
+    </div>
+    
     <script type="module" src="./04-core-code/main.js"></script>
 </body>
 </html>
