@@ -3,7 +3,7 @@
 const FABRIC_TYPE_TO_MATRIX_MAP = {
     'BO': 'UNILINE_SUNSET',
     'BO1': 'WILSON_BYRON_BAY',
-    'SN': 'UNILINE_UNIVIEW_10'
+    'SN': 'UNILINE_UNIVIEW_10%' // 修正了之前發現的 SN 類型名稱不匹配問題
 };
 
 export class ConfigManager {
@@ -17,7 +17,6 @@ export class ConfigManager {
         if (this.isInitialized) return;
 
         try {
-            // [修改] 更新 fetch 路徑以匹配新的全小寫、短橫線命名
             const response = await fetch('./03-data-models/price-matrix-v1.0.json');
             
             if (!response.ok) {
@@ -27,9 +26,13 @@ export class ConfigManager {
             this.priceMatrices = data.matrices;
             this.isInitialized = true;
             console.log("ConfigManager initialized and price matrices loaded.");
+
+            // [新增] 偵錯碼：在主控台中打印出所有已載入的價格表名稱
+            console.log("Available matrix keys:", Object.keys(this.priceMatrices));
+
         } catch (error) {
             console.error("Failed to load price matrices:", error);
-            this.eventAggregator.publish('showNotification', { message: '錯誤：無法載入價格表檔案！', type: 'error'});
+            this.eventAggregator.publish('showNotification', { message: 'Error: Could not load the price list file!', type: 'error'});
         }
     }
 
