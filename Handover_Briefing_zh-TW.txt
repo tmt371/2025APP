@@ -61,11 +61,11 @@
 
 ## **5. 專案文件索引 (Project File Index)**
 
-* **專案開發計畫書**: ` /01-project-docs/產品估價應用程式_專案開發計畫_v2.3.docx `
+* **專案開發計畫書**: ` /01-project-docs/project-plan-v2.3.docx `
 * **工作流程與商業邏輯**: ` /01-project-docs/workflow-and-business-logic_zh-TW.txt `
 * **UI 設計理據**: ` /01-project-docs/ui-design-rationale_zh-TW.txt `
 * **主應用程式入口**: ` /index.html `
 * **最終報價單 (客戶版型)**: ` /02-ui/quote-template-final.html `
 * **最終詳細清單 (客戶附錄版型)**: ` /02-ui/detailed-item-list-final.html `
 * **數據結構藍圖**: ` /03-data-models/quote-data-structure-final.js `
-* **價格矩陣數據**: ` /03-data-models/price-matrix_v1.0.json `
+* **價格矩陣數據**: ` /03-data-models/price-matrix-v1.0.json `
