@@ -1,11 +1,5 @@
 // /04-core-code/config-manager.js
 
-const FABRIC_TYPE_TO_MATRIX_MAP = {
-    'BO': 'UNILINE_SUNSET',
-    'BO1': 'WILSON_BYRON_BAY',
-    'SN': 'UNILINE_UNIVIEW_10%' // 修正了之前發現的 SN 類型名稱不匹配問題
-};
-
 export class ConfigManager {
     constructor(eventAggregator) {
         this.eventAggregator = eventAggregator;
@@ -17,6 +11,7 @@ export class ConfigManager {
         if (this.isInitialized) return;
 
         try {
+            // 我們依然使用之前確認過的、正確的檔案路徑
             const response = await fetch('./03-data-models/price-matrix-v1.0.json');
             
             if (!response.ok) {
@@ -25,10 +20,7 @@ export class ConfigManager {
             const data = await response.json();
             this.priceMatrices = data.matrices;
             this.isInitialized = true;
-            console.log("ConfigManager initialized and price matrices loaded.");
-
-            // [新增] 偵錯碼：在主控台中打印出所有已載入的價格表名稱
-            console.log("Available matrix keys:", Object.keys(this.priceMatrices));
+            console.log("ConfigManager initialized and price matrices loaded successfully.");
 
         } catch (error) {
             console.error("Failed to load price matrices:", error);
@@ -36,12 +28,20 @@ export class ConfigManager {
         }
     }
 
+    /**
+     * [修改] 根據布料類型(BO, BO1, SN)直接獲取對應的價格矩陣
+     * @param {string} fabricType - e.g., 'BO', 'BO1', 'SN'
+     * @returns {object|null}
+     */
     getPriceMatrix(fabricType) {
         if (!this.isInitialized || !this.priceMatrices) {
             console.error("ConfigManager not initialized or matrices not loaded.");
             return null;
         }
-        const matrixName = FABRIC_TYPE_TO_MATRIX_MAP[fabricType];
-        return this.priceMatrices[matrixName] || null;
+        
+        // [修改] 移除中間的映射層，直接使用 fabricType 作為 Key 來查找
+        // 程式碼從 `const matrixName = FABRIC_TYPE_TO_MATRIX_MAP[fabricType];`
+        // 簡化為直接使用 `fabricType`
+        return this.priceMatrices[fabricType] || null;
     }
 }
