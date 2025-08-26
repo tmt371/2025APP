@@ -1,5 +1,5 @@
 專案名稱：捲簾估價應用程式 (Roller Blind Quotation App)
-交接日期：2025年8月25日
+交接日期：2025年8月26日
 
 ==================================================
 
@@ -11,15 +11,23 @@
 
 專案已完成「第一階段：視覺探索與需求確認」及「第二階段：核心架構與數據模型設計」的所有規劃工作。
 
-目前專案正處於**「第三階段：垂直切片開發與迭代」**的最開端。
+目前專案正處於**「第三階段：垂直切片開發與迭代」**的**中期**。我們已經完成了第一個核心功能「快速估價」頁面的大部分 UI 互動邏輯。
 
 **已完成的工作包括：**
 * 所有面向客戶的文件（報價單、詳細清單）與內部操作介面（快速估價頁面）的視覺設計與 HTML 靜態版型。
 * 完整的應用程式操作流程與所有核心商業邏輯的定義。
-* 包含所有必要欄位的數據結構藍圖 (`Quote_Data_Structure_Final.js`)。
-* 從供應商 PDF 轉譯的價格矩陣數據 (`PriceMatrix_v1.0.json`)。
-* 基礎開發環境的搭建 (`index.html` 及所有空的 `.js` 模組檔案)。
-* 已解決所有本地預覽的環境配置與跨域問題。
+* 包含所有必要欄位的數據結構藍圖。
+* 從供應商 PDF 轉譯的價格矩陣數據。
+* 基礎開發環境的搭建 (`index.html` 及所有核心 `.js` 模組檔案)。
+* 已解決所有本地預覽的環境配置與跨域問題，並確立了以 GitHub Pages 為主的標準測試流程。
+* **已實現「快速估價」頁面大部分的 UI 互動，包括：**
+    * 上下/左右滑動的鍵盤面板。
+    * 虛擬鍵盤的數字輸入、刪除、模式切換 (`W`/`H`) 功能。
+    * 將輸入值新增至結果表格，並自動新增下一行。
+    * 點擊表格儲存格以編輯現有數值。
+    * 輸入值的範圍驗證與錯誤提示。
+    * `TYPE` 欄位的單點循環與表頭批次設定功能。
+    * `TYPE` 欄位根據內容顯示不同字體樣式。
 
 ## 3. 核心開發理念與流程 (Core Development Philosophy & Flow)
 
@@ -31,16 +39,33 @@
 
 ## 4. **首要執行任務 (Immediate Next Task)**
 
-**任務目標：為「快速估價」頁面的虛擬鍵盤編寫互動邏輯。**
+**任務目標：為「快速估價」頁面，實現最終的價格計算與匯總功能。**
 
 **具體步驟：**
-1.  **目標模組**: `InputHandler.js` 和 `StateManager.js`。
-2.  **實現 `InputHandler.js`**:
-    * 為虛擬鍵盤上的所有按鈕（數字 0-9, W, H, DEL, ENT）綁定點擊事件。
-    * 當按鈕被點擊時，`InputHandler` 需根據按鍵類型，發布對應的語義化事件（例如 `virtualKeyPressed`, `userEnteredDimension` 等）。
-3.  **實現 `StateManager.js`**:
-    * 開始編寫監聽上述事件的邏輯。
-    * 例如，當監聽到 `userEnteredDimension` 事件時，需更新 `state.quoteData.rollerBlindItems` 陣列，新增一筆項目或更新現有項目的寬/高。
-    * 每次狀態更新後，必須發布 `stateChanged` 事件，以通知 `UIManager` 更新畫面。
+1.  **目標模組**: `input-handler.js`, `state-manager.js`, `price-calculator.js`。
+2.  **實現 `input-handler.js`**:
+    * 為結果表格中 `Price` 欄位的**表頭 (`<th>`)** 綁定點擊事件。
+    * 當 `Price` 表頭被點擊時，`InputHandler` 需發布一個新的語義化事件，例如 `userRequestedPriceCalculation`。
+3.  **實現 `state-manager.js`**:
+    * `StateManager` 需監聽 `userRequestedPriceCalculation` 事件。
+    * 當監聽到事件時，它應遍歷其內部儲存的 `rollerBlindItems` 陣列。
+    * 對於每一筆**已完整輸入**（寬、高、類型皆有值）的項目，`StateManager` 應發布一個 `calculatePriceForRow` 事件，並附上該筆項目的數據。
+4.  **實現 `price-calculator.js`**:
+    * `PriceCalculator` 需監聽 `calculatePriceForRow` 事件。
+    * 接收到事件後，根據傳入的布料類型 (`fabricType`)，從 `ConfigManager` 獲取對應的價格矩陣。
+    * 執行矩陣查價演算法，計算出價格。
+    * 計算完成後，發布一個 `priceCalculatedForRow` 事件，並附上該筆項目的 `itemId` 和計算出的 `price`。
+5.  **完成閉環**:
+    * `StateManager` 監聽 `priceCalculatedForRow` 事件，並將價格更新回對應的項目中。
+    * 最後，發布 `stateChanged` 事件，`UIManager` 會自動將計算出的價格渲染到畫面上。
 
-所有相關的檔案與更詳細的邏輯，都已整理在專案資料夾中。
+## **5. 專案文件索引 (Project File Index)**
+
+* **專案開發計畫書**: ` /01-project-docs/產品估價應用程式_專案開發計畫_v2.3.docx `
+* **工作流程與商業邏輯**: ` /01-project-docs/workflow-and-business-logic_zh-TW.txt `
+* **UI 設計理據**: ` /01-project-docs/ui-design-rationale_zh-TW.txt `
+* **主應用程式入口**: ` /index.html `
+* **最終報價單 (客戶版型)**: ` /02-ui/quote-template-final.html `
+* **最終詳細清單 (客戶附錄版型)**: ` /02-ui/detailed-item-list-final.html `
+* **數據結構藍圖**: ` /03-data-models/quote-data-structure-final.js `
+* **價格矩陣數據**: ` /03-data-models/price-matrix_v1.0.json `
