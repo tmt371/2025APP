@@ -8,12 +8,9 @@ const VALIDATION_RULES = {
 const TYPE_SEQUENCE = ['BO', 'BO1', 'SN'];
 
 export class StateManager {
-    // --- [修改開始] ---
-    // 建構函式不再需要接收 priceCalculator 的實例，實現解耦
     constructor(initialState, eventAggregator) {
         this.state = initialState;
         this.eventAggregator = eventAggregator;
-        // this.priceCalculator = priceCalculator; // [移除] 不再直接持有計算器的引用
         this.initialize();
     }
 
@@ -21,19 +18,17 @@ export class StateManager {
         this.eventAggregator.subscribe('numericKeyPressed', (data) => this._handleNumericKeyPress(data.key));
         this.eventAggregator.subscribe('tableCellClicked', (data) => this._handleTableCellClick(data));
         this.eventAggregator.subscribe('tableHeaderClicked', (data) => this._handleTableHeaderClick(data));
-
-        // [新增] 訂閱由 InputHandler 發布的價格計算請求
         this.eventAggregator.subscribe('userRequestedPriceCalculation', () => this._handlePriceCalculationRequest());
-        
-        // [新增] 訂閱由 PriceCalculator 發布的單筆價格計算結果
         this.eventAggregator.subscribe('priceCalculatedForRow', (data) => this._updatePriceForRow(data));
+
+        // --- [新增] 訂閱由 InputHandler 發布的加總請求事件 ---
+        this.eventAggregator.subscribe('userRequestedSummation', () => this._handleSummationRequest());
     }
-    // --- [修改結束] ---
 
     getState() { return this.state; }
 
-    // --- [核心邏輯不變的方法] ---
-    _handleNumericKeyPress(key) { /* ... (此方法邏輯不變) ... */ 
+    // ... [現有的 _handleNumericKeyPress, _handleTableCellClick, _commitValue 等方法邏輯不變] ...
+    _handleNumericKeyPress(key) { 
         const isNumber = !isNaN(parseInt(key));
         if (isNumber) this.state.ui.inputValue += key;
         if (key === 'DEL') this.state.ui.inputValue = this.state.ui.inputValue.slice(0, -1);
@@ -43,7 +38,7 @@ export class StateManager {
         if (key === 'ENT') { this._commitValue(); }
         this.eventAggregator.publish('stateChanged', this.state);
     }
-    _handleTableCellClick({ rowIndex, column }) { /* ... (此方法邏輯不變) ... */
+    _handleTableCellClick({ rowIndex, column }) {
         const item = this.state.quoteData.rollerBlindItems[rowIndex];
         if (!item) return;
 
@@ -64,7 +59,24 @@ export class StateManager {
 
         this.eventAggregator.publish('stateChanged', this.state);
     }
-    _commitValue() { /* ... (此方法邏輯不變) ... */
+    _handleTableHeaderClick({ column }) {
+        if (column === 'TYPE') {
+            const items = this.state.quoteData.rollerBlindItems;
+            if (items.length === 0) return;
+            
+            const firstItemType = items[0].fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1];
+            const currentIndex = TYPE_SEQUENCE.indexOf(firstItemType);
+            const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
+
+            items.forEach(item => {
+                if (item.width || item.height) {
+                    item.fabricType = nextType;
+                }
+            });
+        }
+        this.eventAggregator.publish('stateChanged', this.state);
+    }
+    _commitValue() {
         const { inputValue, inputMode, activeCell, isEditing } = this.state.ui;
         const value = inputValue === '' ? null : parseInt(inputValue, 10);
         
@@ -92,7 +104,7 @@ export class StateManager {
             this._changeInputMode(inputMode);
         }
     }
-    _changeInputMode(mode) { /* ... (此方法邏輯不變) ... */
+    _changeInputMode(mode) {
         this.state.ui.inputMode = mode;
         this.state.ui.isEditing = false;
         const items = this.state.quoteData.rollerBlindItems;
@@ -108,7 +120,7 @@ export class StateManager {
             this.state.ui.activeCell = { rowIndex: items.length - 1, column: mode };
         }
     }
-    _validateTableState() { /* ... (此方法邏輯不變) ... */
+    _validateTableState() {
         const items = this.state.quoteData.rollerBlindItems;
         for (let i = 0; i < items.length - 1; i++) {
             const item = items[i];
@@ -123,84 +135,62 @@ export class StateManager {
         }
         return true;
     }
-    // --- [核心邏輯不變的方法結束] ---
-
-    _handleTableHeaderClick({ column }) {
-        if (column === 'TYPE') {
-            const items = this.state.quoteData.rollerBlindItems;
-            if (items.length === 0) return;
-            
-            const firstItemType = items[0].fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1];
-            const currentIndex = TYPE_SEQUENCE.indexOf(firstItemType);
-            const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
-
-            items.forEach(item => {
-                if (item.width || item.height) {
-                    item.fabricType = nextType;
-                }
-            });
-        }
-        
-        // --- [修改開始] ---
-        // [移除] 不再直接處理 Price 表頭的點擊，因為 InputHandler 已發布專門事件
-        /*
-        if (column === 'Price') {
-            this._calculateAllPrices();
-        }
-        */
-        // --- [修改結束] ---
-
-        this.eventAggregator.publish('stateChanged', this.state);
-    }
-    
-    // --- [修改開始] ---
-    // [移除] 移除舊的、緊密耦合的直接呼叫方法
-    /*
-    _calculateAllPrices() {
-        const items = this.state.quoteData.rollerBlindItems;
-        items.forEach(item => {
-            const newPrice = this.priceCalculator.calculateRollerBlindPrice(item);
-            if (newPrice !== null) {
-                item.linePrice = newPrice;
-            }
-        });
-        console.log("All prices recalculated.");
-    }
-    */
-    // --- [修改結束] ---
-
-    // --- [新增開始] ---
-    /**
-     * 處理「請求計算所有價格」事件。
-     * 遍歷所有項目，並為每個數據完整的項目發布一個「計算單行價格」的事件。
-     */
     _handlePriceCalculationRequest() {
         const items = this.state.quoteData.rollerBlindItems;
-        
         items.forEach(item => {
-            // 只有在寬、高、類型都已填寫的情況下，才發布計算任務
             if (item.width && item.height && item.fabricType) {
                 this.eventAggregator.publish('calculatePriceForRow', { item });
             }
         });
         console.log("Price calculation requests published for all valid rows.");
     }
-
-    /**
-     * 處理「單行價格計算完成」事件。
-     * 根據 itemId 找到對應的項目，並更新其價格。
-     * @param {object} data - 包含 itemId 和 price 的事件數據
-     */
     _updatePriceForRow({ itemId, price }) {
         if (!itemId || price === undefined) return;
-        
         const itemToUpdate = this.state.quoteData.rollerBlindItems.find(item => item.itemId === itemId);
-
         if (itemToUpdate) {
             itemToUpdate.linePrice = price;
-            // 最終，發布 stateChanged 事件，觸發 UI 重新渲染
             this.eventAggregator.publish('stateChanged', this.state);
         }
+    }
+
+    // --- [新增開始] ---
+    /**
+     * 處理加總請求：驗證所有資料列，若通過則計算總價並更新狀態。
+     */
+    _handleSummationRequest() {
+        const items = this.state.quoteData.rollerBlindItems;
+
+        // 1. 驗證 (除錯)：檢查每一筆數據是否完整
+        for (const item of items) {
+            // 跳過最後一個用於新增的空白行
+            if (!item.width && !item.height) continue; 
+
+            if (!item.width || !item.height || !item.fabricType) {
+                this.eventAggregator.publish('showNotification', {
+                    message: `Cannot calculate sum. All rows must have Width, Height, and Type.`
+                });
+                // 清除可能存在的舊總價
+                if (this.state.quoteData.summary) {
+                    this.state.quoteData.summary.totalSum = null;
+                    this.eventAggregator.publish('stateChanged', this.state);
+                }
+                return; // 停止運算
+            }
+        }
+
+        // 2. 計算：如果所有數據都通過驗證
+        const total = items.reduce((sum, item) => {
+            // 只加總有價格的項目
+            return sum + (item.linePrice || 0);
+        }, 0);
+
+        // 3. 更新狀態：確保 summary 物件存在，並寫入總價
+        this.state.quoteData.summary = this.state.quoteData.summary || {};
+        this.state.quoteData.summary.totalSum = total;
+        
+        // 4. 發布狀態變更，通知 UI 刷新
+        this.eventAggregator.publish('stateChanged', this.state);
+        console.log(`Sum calculated: ${total}`);
     }
     // --- [新增結束] ---
 }
