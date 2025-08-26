@@ -20,14 +20,16 @@ export class StateManager {
         this.eventAggregator.subscribe('tableHeaderClicked', (data) => this._handleTableHeaderClick(data));
         this.eventAggregator.subscribe('userRequestedPriceCalculation', () => this._handlePriceCalculationRequest());
         this.eventAggregator.subscribe('priceCalculatedForRow', (data) => this._updatePriceForRow(data));
-
-        // --- [新增] 訂閱由 InputHandler 發布的加總請求事件 ---
         this.eventAggregator.subscribe('userRequestedSummation', () => this._handleSummationRequest());
+
+        // --- [新增] 訂閱 Insert 和 Delete 事件 ---
+        this.eventAggregator.subscribe('userRequestedInsertRow', () => this._handleInsertRow());
+        this.eventAggregator.subscribe('userRequestedDeleteRow', () => this._handleDeleteRow());
     }
 
     getState() { return this.state; }
 
-    // ... [現有的 _handleNumericKeyPress, _handleTableCellClick, _commitValue 等方法邏輯不變] ...
+    // ... [現有的 _handleNumericKeyPress, _handleTableCellClick, 等方法邏輯不變] ...
     _handleNumericKeyPress(key) { 
         const isNumber = !isNaN(parseInt(key));
         if (isNumber) this.state.ui.inputValue += key;
@@ -152,45 +154,75 @@ export class StateManager {
             this.eventAggregator.publish('stateChanged', this.state);
         }
     }
-
-    // --- [新增開始] ---
-    /**
-     * 處理加總請求：驗證所有資料列，若通過則計算總價並更新狀態。
-     */
     _handleSummationRequest() {
         const items = this.state.quoteData.rollerBlindItems;
-
-        // 1. 驗證 (除錯)：檢查每一筆數據是否完整
         for (const item of items) {
-            // 跳過最後一個用於新增的空白行
             if (!item.width && !item.height) continue; 
-
             if (!item.width || !item.height || !item.fabricType) {
                 this.eventAggregator.publish('showNotification', {
                     message: `Cannot calculate sum. All rows must have Width, Height, and Type.`
                 });
-                // 清除可能存在的舊總價
                 if (this.state.quoteData.summary) {
                     this.state.quoteData.summary.totalSum = null;
                     this.eventAggregator.publish('stateChanged', this.state);
                 }
-                return; // 停止運算
+                return;
             }
         }
-
-        // 2. 計算：如果所有數據都通過驗證
         const total = items.reduce((sum, item) => {
-            // 只加總有價格的項目
             return sum + (item.linePrice || 0);
         }, 0);
-
-        // 3. 更新狀態：確保 summary 物件存在，並寫入總價
         this.state.quoteData.summary = this.state.quoteData.summary || {};
         this.state.quoteData.summary.totalSum = total;
-        
-        // 4. 發布狀態變更，通知 UI 刷新
         this.eventAggregator.publish('stateChanged', this.state);
         console.log(`Sum calculated: ${total}`);
+    }
+
+    // --- [新增開始] ---
+    /**
+     * 處理插入新資料列的請求
+     */
+    _handleInsertRow() {
+        const { activeCell } = this.state.ui;
+        const items = this.state.quoteData.rollerBlindItems;
+        const insertAtIndex = activeCell.rowIndex + 1; // 插入在當前行的下方
+
+        const newItem = {
+            itemId: `item-${Date.now()}`,
+            width: null, height: null, fabricType: null, linePrice: null
+        };
+
+        items.splice(insertAtIndex, 0, newItem); // 使用 splice 插入新項目
+        
+        // 更新 activeCell 指向新插入的行
+        this.state.ui.activeCell.rowIndex = insertAtIndex;
+
+        this.eventAggregator.publish('stateChanged', this.state);
+        console.log(`Row inserted at index ${insertAtIndex}.`);
+    }
+
+    /**
+     * 處理刪除資料列的請求
+     */
+    _handleDeleteRow() {
+        const { activeCell } = this.state.ui;
+        const items = this.state.quoteData.rollerBlindItems;
+
+        // 保護機制：如果只剩下一行，則不允許刪除
+        if (items.length <= 1) {
+            this.eventAggregator.publish('showNotification', { message: 'Cannot delete the last row.' });
+            return;
+        }
+
+        items.splice(activeCell.rowIndex, 1); // 使用 splice 刪除項目
+
+        // 更新 activeCell，避免指向不存在的索引
+        if (activeCell.rowIndex >= items.length) {
+            this.state.ui.activeCell.rowIndex = items.length - 1;
+        }
+
+        this.eventAggregator.publish('stateChanged', this.state);
+        console.log(`Row deleted at index ${activeCell.rowIndex}.`);
     }
     // --- [新增結束] ---
 }
