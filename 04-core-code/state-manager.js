@@ -41,7 +41,6 @@ export class StateManager {
             this.state.ui.inputMode = column;
             this.state.ui.activeCell = { rowIndex, column };
             this.state.ui.isEditing = true;
-            // [修正] 確保載入的數值為字串，以便刪除鍵可以立即作用
             this.state.ui.inputValue = String(item[column] || '');
         }
 
@@ -61,7 +60,7 @@ export class StateManager {
             const items = this.state.quoteData.rollerBlindItems;
             if (items.length === 0) return;
             
-            const firstItemType = items[0].fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1]; // Handle initial null case
+            const firstItemType = items[0].fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1];
             const currentIndex = TYPE_SEQUENCE.indexOf(firstItemType);
             const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
 
@@ -76,11 +75,9 @@ export class StateManager {
     
     _commitValue() {
         const { inputValue, inputMode, activeCell, isEditing } = this.state.ui;
-        // 如果輸入框為空，則將值視為 null
         const value = inputValue === '' ? null : parseInt(inputValue, 10);
         
         const rule = VALIDATION_RULES[inputMode];
-        // 只有在輸入框不為空時，才進行範圍驗證
         if (value !== null && (isNaN(value) || value < rule.min || value > rule.max)) {
             this.eventAggregator.publish('showNotification', { message: `${rule.name} must be between ${rule.min} and ${rule.max}.` });
             this.state.ui.inputValue = '';
@@ -93,7 +90,6 @@ export class StateManager {
             targetItem[inputMode] = value;
         }
         
-        // [新增] 提交數值後，對整個表格狀態進行驗證
         if (this._validateTableState()) {
             if (isEditing) {
                 this.state.ui.isEditing = false;
@@ -123,22 +119,22 @@ export class StateManager {
         }
     }
 
-    // [新增] 驗證表格狀態，不允許中間有空行
     _validateTableState() {
         const items = this.state.quoteData.rollerBlindItems;
-        // 我們只檢查到倒數第二行，因為最後一行本來就可能是空的
         for (let i = 0; i < items.length - 1; i++) {
             const item = items[i];
-            // 如果某一行的寬和高都為空 (null 或 0 都算空)
             if (!item.width && !item.height) {
                 this.eventAggregator.publish('showNotification', {
                     message: `Row ${i + 1} is empty. Please fill in the dimensions or delete the row.`
                 });
-                // 將焦點移回這個問題行
+                
+                // [修正] 當驗證失敗時，除了移動焦點，還要強制重置輸入模式
                 this.state.ui.activeCell = { rowIndex: i, column: 'width' };
-                return false; // 驗證失敗
+                this.state.ui.inputMode = 'width'; // <--- 核心修正點
+                
+                return false;
             }
         }
-        return true; // 驗證成功
+        return true;
     }
 }
