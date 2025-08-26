@@ -8,7 +8,27 @@ export class InputHandler {
     initialize() {
         this._setupNumericKeyboard();
         this._setupTableInteraction();
+        this._setupFunctionKeys(); // --- [新增] 呼叫設定功能鍵的方法 ---
     }
+
+    // --- [新增開始] ---
+    /**
+     * 設定功能鍵 (F1, F2, Sum) 的事件監聽
+     */
+    _setupFunctionKeys() {
+        const sumButton = document.getElementById('key-sum');
+        if (sumButton) {
+            sumButton.addEventListener('click', () => {
+                // 當 Sum 按鈕被點擊時，發布一個語義化的事件
+                this.eventAggregator.publish('userRequestedSummation');
+            });
+        }
+
+        // F1 和 F2 按鈕目前沒有功能，未來若有需要可在此處添加
+        // const f1Button = document.getElementById('key-f1');
+        // const f2Button = document.getElementById('key-f2');
+    }
+    // --- [新增結束] ---
 
     _setupNumericKeyboard() {
         const numericKeyboard = document.getElementById('numeric-keyboard');
@@ -37,16 +57,11 @@ export class InputHandler {
                 const column = target.dataset.column;
                 
                 if (isHeader) {
-                    // --- [修改開始] ---
-                    // 根據架構文件，我們需要發布一個更具語義的事件來觸發價格計算
                     if (column === 'Price') {
-                        // 當 Price 表頭被點擊時，發布專門的計算請求事件
                         this.eventAggregator.publish('userRequestedPriceCalculation');
                     } else {
-                        // 對於其他表頭（例如 TYPE），維持原有的通用事件
                         this.eventAggregator.publish('tableHeaderClicked', { column });
                     }
-                    // --- [修改結束] ---
                 } else {
                     const rowIndex = target.parentElement.dataset.rowIndex;
                     this.eventAggregator.publish('tableCellClicked', { 
