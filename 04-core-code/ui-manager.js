@@ -9,12 +9,8 @@ export class UIManager {
     }
 
     render(state) {
-        switch (state.ui.currentView) {
-            case 'QUICK_QUOTE':
-                this._renderQuickQuoteView(state);
-                break;
-            default:
-                this.appElement.innerHTML = `<p>Error: Unknown view state.</p>`;
+        if (state.ui.currentView === 'QUICK_QUOTE') {
+            this._renderQuickQuoteView(state);
         }
     }
 
@@ -23,28 +19,24 @@ export class UIManager {
             this.inputDisplay.textContent = state.ui.inputValue || '';
         }
 
-        // [修改] 渲染表格時加入高亮邏輯
         if (this.resultsTableBody) {
             const { rollerBlindItems } = state.quoteData;
             const { activeCell } = state.ui;
 
-            if (rollerBlindItems.length === 0) {
-                this.resultsTableBody.innerHTML = `<tr><td colspan="4" style="color: #888;">Please enter dimensions to begin...</td></tr>`;
-            } else {
-                this.resultsTableBody.innerHTML = rollerBlindItems.map((item, index) => {
-                    const isWHighlighted = index === activeCell.rowIndex && activeCell.column === 'width';
-                    const isHHighlighted = index === activeCell.rowIndex && activeCell.column === 'height';
-                    
-                    return `
-                        <tr>
-                            <td class="${isWHighlighted ? 'highlighted-cell' : ''}">${item.width || ''}</td>
-                            <td class="${isHHighlighted ? 'highlighted-cell' : ''}">${item.height || ''}</td>
-                            <td>${item.fabricType || ''}</td>
-                            <td class="text-right">${item.linePrice ? '$' + item.linePrice.toFixed(2) : ''}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
+            this.resultsTableBody.innerHTML = rollerBlindItems.map((item, index) => {
+                const isWHighlighted = index === activeCell.rowIndex && activeCell.column === 'width';
+                const isHHighlighted = index === activeCell.rowIndex && activeCell.column === 'height';
+                
+                // [修改] 加入 data-row-index, 並為儲存格加入 data-column
+                return `
+                    <tr data-row-index="${index}">
+                        <td data-column="width" class="${isWHighlighted ? 'highlighted-cell' : ''}">${item.width || ''}</td>
+                        <td data-column="height" class="${isHHighlighted ? 'highlighted-cell' : ''}">${item.height || ''}</td>
+                        <td data-column="TYPE">${(item.width || item.height) ? (item.fabricType || '') : ''}</td>
+                        <td data-column="Price" class="text-right">${item.linePrice ? '$' + item.linePrice.toFixed(2) : ''}</td>
+                    </tr>
+                `;
+            }).join('');
         }
     }
 }
