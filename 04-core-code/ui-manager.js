@@ -5,6 +5,10 @@ export class UIManager {
         this.appElement = appElement;
         this.inputDisplay = document.getElementById('input-display');
         this.resultsTableBody = document.querySelector('.results-table tbody');
+        
+        // --- [新增] 獲取總價顯示區的 DOM 元素 ---
+        this.totalSumValueElement = document.getElementById('total-sum-value');
+        
         this.eventAggregator = eventAggregator;
     }
 
@@ -15,10 +19,12 @@ export class UIManager {
     }
 
     _renderQuickQuoteView(state) {
+        // 更新輸入顯示框
         if (this.inputDisplay) {
             this.inputDisplay.textContent = state.ui.inputValue || '';
         }
 
+        // 更新結果表格
         if (this.resultsTableBody) {
             const { rollerBlindItems } = state.quoteData;
             const { activeCell } = state.ui;
@@ -30,7 +36,6 @@ export class UIManager {
                     const isWHighlighted = index === activeCell.rowIndex && activeCell.column === 'width';
                     const isHHighlighted = index === activeCell.rowIndex && activeCell.column === 'height';
                     
-                    // [新增] 根據 fabricType 決定要使用的 CSS class
                     let typeClass = '';
                     if (item.fabricType === 'BO1') {
                         typeClass = 'type-bo1';
@@ -49,5 +54,21 @@ export class UIManager {
                 }).join('');
             }
         }
+
+        // --- [新增開始] ---
+        // 更新總價顯示區
+        if (this.totalSumValueElement) {
+            // 安全地從 state 中獲取 totalSum
+            const totalSum = state.quoteData.summary ? state.quoteData.summary.totalSum : null;
+
+            if (typeof totalSum === 'number') {
+                // 如果 totalSum 是一個數字，則格式化並顯示
+                this.totalSumValueElement.textContent = `$${totalSum.toFixed(2)}`;
+            } else {
+                // 否則 (為 null 或 undefined)，清空顯示
+                this.totalSumValueElement.textContent = '';
+            }
+        }
+        // --- [新增結束] ---
     }
 }
