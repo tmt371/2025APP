@@ -8,27 +8,57 @@ export class InputHandler {
     initialize() {
         this._setupNumericKeyboard();
         this._setupTableInteraction();
-        this._setupFunctionKeys(); // --- [新增] 呼叫設定功能鍵的方法 ---
+        this._setupFunctionKeys();
+        this._setupPanelToggles(); // --- [新增] 呼叫設定面板切換的方法 ---
     }
-
+    
     // --- [新增開始] ---
     /**
-     * 設定功能鍵 (F1, F2, Sum) 的事件監聽
+     * 設定兩個面板（數字鍵盤和功能鍵盤）的切換把手的事件監聽
+     */
+    _setupPanelToggles() {
+        const numericToggle = document.getElementById('panel-toggle');
+        if (numericToggle) {
+            numericToggle.addEventListener('click', () => {
+                this.eventAggregator.publish('userToggledNumericKeyboard');
+            });
+        }
+
+        const functionToggle = document.getElementById('function-panel-toggle');
+        if (functionToggle) {
+            functionToggle.addEventListener('click', () => {
+                this.eventAggregator.publish('userToggledFunctionKeyboard');
+            });
+        }
+    }
+    // --- [新增結束] ---
+
+    /**
+     * 設定鍵盤功能鍵 (F1, F2, Sum, Insert, Delete 等) 的事件監聽
      */
     _setupFunctionKeys() {
         const sumButton = document.getElementById('key-sum');
         if (sumButton) {
             sumButton.addEventListener('click', () => {
-                // 當 Sum 按鈕被點擊時，發布一個語義化的事件
                 this.eventAggregator.publish('userRequestedSummation');
             });
         }
 
-        // F1 和 F2 按鈕目前沒有功能，未來若有需要可在此處添加
-        // const f1Button = document.getElementById('key-f1');
-        // const f2Button = document.getElementById('key-f2');
+        // --- [新增] 為右側功能面板的按鈕綁定事件 ---
+        const insertButton = document.getElementById('key-insert');
+        if (insertButton) {
+            insertButton.addEventListener('click', () => {
+                this.eventAggregator.publish('userRequestedInsertRow');
+            });
+        }
+
+        const deleteButton = document.getElementById('key-delete');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', () => {
+                this.eventAggregator.publish('userRequestedDeleteRow');
+            });
+        }
     }
-    // --- [新增結束] ---
 
     _setupNumericKeyboard() {
         const numericKeyboard = document.getElementById('numeric-keyboard');
