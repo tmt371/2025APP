@@ -21,6 +21,9 @@ class App {
                 rollerBlindItems: [
                     { itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null }
                 ],
+                summary: { // 確保 summary 物件在初始狀態中存在
+                    totalSum: null
+                }
             }
         };
 
@@ -28,13 +31,13 @@ class App {
         this.eventAggregator = new EventAggregator();
         this.configManager = new ConfigManager(this.eventAggregator);
         this.priceCalculator = new PriceCalculator(this.configManager, this.eventAggregator);
+        this.stateManager = new StateManager(initialState, this.eventAggregator); 
         
         // --- [修改開始] ---
-        // StateManager 的建構函式不再需要 priceCalculator 實例，將其移除
-        this.stateManager = new StateManager(initialState, this.eventAggregator); 
+        // 將 stateManager 實例傳遞給 UIManager，以便 UIManager 能獲取資料來產生郵件
+        this.uiManager = new UIManager(document.getElementById('app'), this.eventAggregator, this.stateManager);
         // --- [修改結束] ---
-        
-        this.uiManager = new UIManager(document.getElementById('app'), this.eventAggregator);
+
         this.inputHandler = new InputHandler(this.eventAggregator); 
     }
 
@@ -51,6 +54,7 @@ class App {
             this.uiManager.render(state);
         });
         this.eventAggregator.subscribe('showNotification', (data) => {
+            // 為了方便測試，暫時使用 alert。未來可以替換成更美觀的 UI 元件。
             alert(data.message);
         });
 
