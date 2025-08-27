@@ -6,11 +6,13 @@ const VALIDATION_RULES = {
 };
 
 const TYPE_SEQUENCE = ['BO', 'BO1', 'SN'];
-const LOCAL_STORAGE_KEY = 'rollerBlindQuoteData'; // --- [新增] 定義用於 localStorage 的金鑰 ---
+const LOCAL_STORAGE_KEY = 'rollerBlindQuoteData';
 
 export class StateManager {
     constructor(initialState, eventAggregator) {
         this.state = initialState;
+        // --- [新增] 確保 UI 狀態包含 selectedRowIndex ---
+        this.state.ui.selectedRowIndex = null;
         this.eventAggregator = eventAggregator;
         this.initialize();
     }
@@ -24,15 +26,16 @@ export class StateManager {
         this.eventAggregator.subscribe('userRequestedSummation', () => this._handleSummationRequest());
         this.eventAggregator.subscribe('userRequestedInsertRow', () => this._handleInsertRow());
         this.eventAggregator.subscribe('userRequestedDeleteRow', () => this._handleDeleteRow());
-
-        // --- [新增] 訂閱 Save 和 Load 事件 ---
         this.eventAggregator.subscribe('userRequestedSave', () => this._handleSave());
         this.eventAggregator.subscribe('userRequestedLoad', () => this._handleLoad());
+
+        // --- [新增] 訂閱項次點擊事件 ---
+        this.eventAggregator.subscribe('sequenceCellClicked', (data) => this._handleSequenceCellClick(data));
     }
 
     getState() { return this.state; }
 
-    // ... [現有的 _handleNumericKeyPress, _handleTableCellClick, 等方法邏輯不變] ...
+    // ... [部分現有方法邏輯不變] ...
     _handleNumericKeyPress(key) { 
         const isNumber = !isNaN(parseInt(key));
         if (isNumber) this.state.ui.inputValue += key;
@@ -46,6 +49,9 @@ export class StateManager {
     _handleTableCellClick({ rowIndex, column }) {
         const item = this.state.quoteData.rollerBlindItems[rowIndex];
         if (!item) return;
+
+        // --- [修改] 點擊其他儲存格時，清除項次選擇狀態 ---
+        this.state.ui.selectedRowIndex = null;
 
         if (column === 'width' || column === 'height') {
             this.state.ui.inputMode = column;
@@ -80,65 +86,6 @@ export class StateManager {
             });
         }
         this.eventAggregator.publish('stateChanged', this.state);
-    }
-    _commitValue() {
-        const { inputValue, inputMode, activeCell, isEditing } = this.state.ui;
-        const value = inputValue === '' ? null : parseInt(inputValue, 10);
-        
-        const rule = VALIDATION_RULES[inputMode];
-        if (value !== null && (isNaN(value) || value < rule.min || value > rule.max)) {
-            this.eventAggregator.publish('showNotification', { message: `${rule.name} must be between ${rule.min} and ${rule.max}.` });
-            this.state.ui.inputValue = '';
-            return;
-        }
-
-        const items = this.state.quoteData.rollerBlindItems;
-        const targetItem = items[activeCell.rowIndex];
-        if (targetItem) {
-            targetItem[inputMode] = value;
-        }
-        
-        if (this._validateTableState()) {
-            if (isEditing) {
-                this.state.ui.isEditing = false;
-            } else if (activeCell.rowIndex === items.length - 1 && (targetItem.width || targetItem.height)) {
-                items.push({ itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null });
-            }
-            
-            this.state.ui.inputValue = '';
-            this._changeInputMode(inputMode);
-        }
-    }
-    _changeInputMode(mode) {
-        this.state.ui.inputMode = mode;
-        this.state.ui.isEditing = false;
-        const items = this.state.quoteData.rollerBlindItems;
-        let found = false;
-        for (let i = 0; i < items.length; i++) {
-            if (items[i][mode] === null || items[i][mode] === '') {
-                this.state.ui.activeCell = { rowIndex: i, column: mode };
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            this.state.ui.activeCell = { rowIndex: items.length - 1, column: mode };
-        }
-    }
-    _validateTableState() {
-        const items = this.state.quoteData.rollerBlindItems;
-        for (let i = 0; i < items.length - 1; i++) {
-            const item = items[i];
-            if (!item.width && !item.height) {
-                this.eventAggregator.publish('showNotification', {
-                    message: `Row ${i + 1} is empty. Please fill in the dimensions or delete the row.`
-                });
-                this.state.ui.activeCell = { rowIndex: i, column: 'width' };
-                this.state.ui.inputMode = 'width';
-                return false;
-            }
-        }
-        return true;
     }
     _handlePriceCalculationRequest() {
         const items = this.state.quoteData.rollerBlindItems;
@@ -180,38 +127,6 @@ export class StateManager {
         this.eventAggregator.publish('stateChanged', this.state);
         console.log(`Sum calculated: ${total}`);
     }
-    _handleInsertRow() {
-        const { activeCell } = this.state.ui;
-        const items = this.state.quoteData.rollerBlindItems;
-        const insertAtIndex = activeCell.rowIndex + 1;
-        const newItem = {
-            itemId: `item-${Date.now()}`,
-            width: null, height: null, fabricType: null, linePrice: null
-        };
-        items.splice(insertAtIndex, 0, newItem);
-        this.state.ui.activeCell.rowIndex = insertAtIndex;
-        this.eventAggregator.publish('stateChanged', this.state);
-        console.log(`Row inserted at index ${insertAtIndex}.`);
-    }
-    _handleDeleteRow() {
-        const { activeCell } = this.state.ui;
-        const items = this.state.quoteData.rollerBlindItems;
-        if (items.length <= 1) {
-            this.eventAggregator.publish('showNotification', { message: 'Cannot delete the last row.' });
-            return;
-        }
-        items.splice(activeCell.rowIndex, 1);
-        if (activeCell.rowIndex >= items.length) {
-            this.state.ui.activeCell.rowIndex = items.length - 1;
-        }
-        this.eventAggregator.publish('stateChanged', this.state);
-        console.log(`Row deleted at index ${activeCell.rowIndex}.`);
-    }
-
-    // --- [新增開始] ---
-    /**
-     * 處理儲存估價單資料的請求
-     */
     _handleSave() {
         try {
             const dataToSave = JSON.stringify(this.state.quoteData);
@@ -223,17 +138,13 @@ export class StateManager {
             this.eventAggregator.publish('showNotification', { message: 'Error: Could not save quote.', type: 'error' });
         }
     }
-
-    /**
-     * 處理讀取估價單資料的請求
-     */
     _handleLoad() {
         try {
             const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
             if (savedData) {
                 const loadedQuoteData = JSON.parse(savedData);
-                this.state.quoteData = loadedQuoteData; // 覆蓋當前的估價單資料
-                this.eventAggregator.publish('stateChanged', this.state); // 發布變更以更新 UI
+                this.state.quoteData = loadedQuoteData;
+                this.eventAggregator.publish('stateChanged', this.state);
                 this.eventAggregator.publish('showNotification', { message: 'Quote loaded successfully!' });
                 console.log('Quote data loaded from localStorage.');
             } else {
@@ -244,5 +155,171 @@ export class StateManager {
             this.eventAggregator.publish('showNotification', { message: 'Error: Could not load quote data.', type: 'error' });
         }
     }
-    // --- [新增結束] ---
+    _validateTableState() {
+        const items = this.state.quoteData.rollerBlindItems;
+        for (let i = 0; i < items.length - 1; i++) {
+            const item = items[i];
+            if (!item.width && !item.height) {
+                this.eventAggregator.publish('showNotification', {
+                    message: `Row ${i + 1} is empty. Please fill in the dimensions or delete the row.`
+                });
+                this.state.ui.activeCell = { rowIndex: i, column: 'width' };
+                this.state.ui.inputMode = 'width';
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @fileoverview [修改] 需求四：實現價格自動清空
+     */
+    _commitValue() {
+        const { inputValue, inputMode, activeCell, isEditing } = this.state.ui;
+        const value = inputValue === '' ? null : parseInt(inputValue, 10);
+        
+        const rule = VALIDATION_RULES[inputMode];
+        if (value !== null && (isNaN(value) || value < rule.min || value > rule.max)) {
+            this.eventAggregator.publish('showNotification', { message: `${rule.name} must be between ${rule.min} and ${rule.max}.` });
+            this.state.ui.inputValue = '';
+            return;
+        }
+
+        const items = this.state.quoteData.rollerBlindItems;
+        const targetItem = items[activeCell.rowIndex];
+        if (targetItem) {
+            targetItem[inputMode] = value;
+            // --- [新增] 如果寬或高被清空，則價格也清空 ---
+            if ((inputMode === 'width' || inputMode === 'height') && value === null) {
+                targetItem.linePrice = null;
+            }
+        }
+        
+        if (this._validateTableState()) {
+            if (isEditing) {
+                this.state.ui.isEditing = false;
+            } else if (activeCell.rowIndex === items.length - 1 && (targetItem.width || targetItem.height)) {
+                items.push({ itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null });
+            }
+            
+            this.state.ui.inputValue = '';
+            this._changeInputMode(inputMode);
+        }
+    }
+
+    _changeInputMode(mode) {
+        this.state.ui.inputMode = mode;
+        this.state.ui.isEditing = false;
+        // 清除項次選擇狀態，因為現在焦點在 W/H 輸入上
+        this.state.ui.selectedRowIndex = null;
+        
+        const items = this.state.quoteData.rollerBlindItems;
+        let found = false;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i][mode] === null || items[i][mode] === '') {
+                this.state.ui.activeCell = { rowIndex: i, column: mode };
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            this.state.ui.activeCell = { rowIndex: items.length - 1, column: mode };
+        }
+    }
+
+    // --- [新增/重構開始] ---
+
+    /**
+     * 處理項次點擊事件，更新選定行
+     */
+    _handleSequenceCellClick({ rowIndex }) {
+        // 切換選中狀態：如果點擊的是已選中的行，則取消選中，否則選中新行
+        if (this.state.ui.selectedRowIndex === rowIndex) {
+            this.state.ui.selectedRowIndex = null;
+        } else {
+            this.state.ui.selectedRowIndex = rowIndex;
+        }
+        this.eventAggregator.publish('stateChanged', this.state);
+    }
+    
+    /**
+     * 輔助方法：操作結束後，找到第一個寬度為空的儲存格並將焦點移過去
+     */
+    _focusOnNextEmptyWidthCell() {
+        const items = this.state.quoteData.rollerBlindItems;
+        const nextEmptyIndex = items.findIndex(item => item.width === null);
+
+        if (nextEmptyIndex !== -1) {
+            this.state.ui.activeCell = { rowIndex: nextEmptyIndex, column: 'width' };
+            this.state.ui.inputMode = 'width';
+        } else {
+            // 如果都填滿了，就將焦點放在最後一行的寬度上
+            this.state.ui.activeCell = { rowIndex: items.length - 1, column: 'width' };
+            this.state.ui.inputMode = 'width';
+        }
+    }
+
+    /**
+     * @fileoverview [修改] 需求一：重構插入邏輯
+     */
+    _handleInsertRow() {
+        const { selectedRowIndex } = this.state.ui;
+        const items = this.state.quoteData.rollerBlindItems;
+
+        if (selectedRowIndex === null) {
+            this.eventAggregator.publish('showNotification', { message: 'Please select a row by clicking its number before inserting.' });
+            return;
+        }
+        
+        const rowBelowIndex = selectedRowIndex + 1;
+        const rowBelow = items[rowBelowIndex];
+
+        // 檢查下一行是否為無意義的空白行
+        if (rowBelow && rowBelow.width === null && rowBelow.height === null) {
+             this.eventAggregator.publish('showNotification', { message: 'Cannot insert a row above an existing empty row.' });
+             return;
+        }
+
+        const newItem = { itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null };
+        items.splice(rowBelowIndex, 0, newItem);
+        
+        this._focusOnNextEmptyWidthCell(); // 跳轉焦點
+        this.state.ui.selectedRowIndex = null; // 清除選擇
+        this.eventAggregator.publish('stateChanged', this.state);
+        console.log(`Row inserted at index ${rowBelowIndex}.`);
+    }
+
+    /**
+     * @fileoverview [修改] 需求二：重構刪除邏輯
+     */
+    _handleDeleteRow() {
+        const { selectedRowIndex } = this.state.ui;
+        const items = this.state.quoteData.rollerBlindItems;
+        
+        if (selectedRowIndex === null) {
+            this.eventAggregator.publish('showNotification', { message: 'Please select a row by clicking its number before deleting.' });
+            return;
+        }
+
+        const selectedItem = items[selectedRowIndex];
+        
+        // 保護機制：如果是最後一行且為空，不允許刪除
+        if (selectedRowIndex === items.length - 1 && selectedItem.width === null && selectedItem.height === null) {
+            this.eventAggregator.publish('showNotification', { message: 'Cannot delete the final empty row.' });
+            return;
+        }
+
+        items.splice(selectedRowIndex, 1);
+        
+        // 如果刪除後為空，補一個空白行
+        if (items.length === 0) {
+            items.push({ itemId: `item-${Date.now()}`, width: null, height: null, fabricType: null, linePrice: null });
+        }
+        
+        this._focusOnNextEmptyWidthCell(); // 跳轉焦點
+        this.state.ui.selectedRowIndex = null; // 清除選擇
+        this.eventAggregator.publish('stateChanged', this.state);
+        console.log(`Row deleted at index ${selectedRowIndex}.`);
+    }
+    // --- [新增/重構結束] ---
 }
