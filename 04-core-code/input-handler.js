@@ -28,11 +28,7 @@ export class InputHandler {
         }
     }
 
-    /**
-     * 設定所有功能鍵的事件監聽
-     */
     _setupFunctionKeys() {
-        // 數字鍵盤上方的功能鍵
         const sumButton = document.getElementById('key-sum');
         if (sumButton) {
             sumButton.addEventListener('click', () => {
@@ -40,7 +36,6 @@ export class InputHandler {
             });
         }
 
-        // 右側功能面板的按鈕
         const insertButton = document.getElementById('key-insert');
         if (insertButton) {
             insertButton.addEventListener('click', () => {
@@ -55,7 +50,6 @@ export class InputHandler {
             });
         }
         
-        // --- [新增] 為 Save, Load, Email 按鈕綁定事件 ---
         const saveButton = document.getElementById('key-save');
         if (saveButton) {
             saveButton.addEventListener('click', () => {
@@ -105,17 +99,29 @@ export class InputHandler {
                 const column = target.dataset.column;
                 
                 if (isHeader) {
+                    // 點擊表頭的邏輯
                     if (column === 'Price') {
                         this.eventAggregator.publish('userRequestedPriceCalculation');
-                    } else {
+                    } else if (column !== 'sequence') { // 忽略對項次表頭的點擊
                         this.eventAggregator.publish('tableHeaderClicked', { column });
                     }
-                } else {
+                } else { // 點擊儲存格的邏輯
                     const rowIndex = target.parentElement.dataset.rowIndex;
-                    this.eventAggregator.publish('tableCellClicked', { 
-                        rowIndex: parseInt(rowIndex, 10), 
-                        column 
-                    });
+                    
+                    // --- [修改開始] ---
+                    if (column === 'sequence') {
+                        // 如果點擊的是項次欄，發布專門的事件
+                        this.eventAggregator.publish('sequenceCellClicked', { 
+                            rowIndex: parseInt(rowIndex, 10)
+                        });
+                    } else {
+                        // 否則，維持原有的儲存格點擊事件
+                        this.eventAggregator.publish('tableCellClicked', { 
+                            rowIndex: parseInt(rowIndex, 10), 
+                            column 
+                        });
+                    }
+                    // --- [修改結束] ---
                 }
             });
         }
