@@ -1,15 +1,13 @@
 // /04-core-code/ui-manager.js
 
-// --- [新增] 為郵件功能預設收件人 ---
-const COMPANY_EMAIL = "service@example.com"; // 請替換為您公司的電郵地址
-const CUSTOMER_EMAIL = ""; // 預設客戶電郵為空，可手動填寫
+const COMPANY_EMAIL = "service@example.com";
+const CUSTOMER_EMAIL = "";
 
 export class UIManager {
-    // --- [修改] 建構函式現在接收 stateManager ---
     constructor(appElement, eventAggregator, stateManager) {
         this.appElement = appElement;
         this.eventAggregator = eventAggregator;
-        this.stateManager = stateManager; // 儲存 stateManager 的引用
+        this.stateManager = stateManager;
 
         this.inputDisplay = document.getElementById('input-display');
         this.resultsTableBody = document.querySelector('.results-table tbody');
@@ -23,8 +21,6 @@ export class UIManager {
     initialize() {
         this.eventAggregator.subscribe('userToggledNumericKeyboard', () => this._toggleNumericKeyboard());
         this.eventAggregator.subscribe('userToggledFunctionKeyboard', () => this._toggleFunctionKeyboard());
-        
-        // --- [新增] 訂閱郵件寄發請求事件 ---
         this.eventAggregator.subscribe('userRequestedEmailQuote', () => this._handleEmailRequest());
     }
 
@@ -41,7 +37,7 @@ export class UIManager {
 
         if (this.resultsTableBody) {
             const { rollerBlindItems } = state.quoteData;
-            const { activeCell } = state.ui;
+            const { activeCell, selectedRowIndex } = state.ui; // --- [修改] 獲取 selectedRowIndex ---
 
             if (rollerBlindItems.length === 0 || (rollerBlindItems.length === 1 && !rollerBlindItems[0].width && !rollerBlindItems[0].height)) {
                 this.resultsTableBody.innerHTML = `<tr><td colspan="5" style="color: #888;">Please enter dimensions to begin...</td></tr>`;
@@ -50,6 +46,12 @@ export class UIManager {
                     const isWHighlighted = index === activeCell.rowIndex && activeCell.column === 'width';
                     const isHHighlighted = index === activeCell.rowIndex && activeCell.column === 'height';
                     
+                    // --- [修改開始] ---
+                    // 判斷當前項次是否為被選中的行
+                    const isSequenceSelected = index === selectedRowIndex;
+                    const sequenceCellClass = isSequenceSelected ? 'selected-row-highlight' : '';
+                    // --- [修改結束] ---
+
                     let typeClass = '';
                     if (item.fabricType === 'BO1') {
                         typeClass = 'type-bo1';
@@ -59,7 +61,7 @@ export class UIManager {
 
                     return `
                         <tr data-row-index="${index}">
-                            <td>${index + 1}</td>
+                            <td data-column="sequence" class="${sequenceCellClass}">${index + 1}</td>
                             <td data-column="width" class="${isWHighlighted ? 'highlighted-cell' : ''}">${item.width || ''}</td>
                             <td data-column="height" class="${isHHighlighted ? 'highlighted-cell' : ''}">${item.height || ''}</td>
                             <td data-column="TYPE" class="${typeClass}">${(item.width || item.height) ? (item.fabricType || '') : ''}</td>
@@ -92,15 +94,10 @@ export class UIManager {
         }
     }
 
-    // --- [新增開始] ---
-    /**
-     * 處理郵件寄發請求
-     */
     _handleEmailRequest() {
         const state = this.stateManager.getState();
         const quoteData = state.quoteData;
 
-        // 檢查是否有內容可供寄送
         if (!quoteData || !quoteData.rollerBlindItems || quoteData.rollerBlindItems.length === 0) {
             this.eventAggregator.publish('showNotification', { message: 'There is no quote data to email.' });
             return;
@@ -108,20 +105,11 @@ export class UIManager {
 
         const subject = "Ez Blinds Quotation";
         const body = this._formatQuoteForEmail(quoteData);
-
-        // 將內文進行 URL 編碼，以確保特殊字元 (如換行、空格) 能被正確處理
         const encodedBody = encodeURIComponent(body);
-
-        // 建立並觸發 mailto 連結
         const mailtoLink = `mailto:${CUSTOMER_EMAIL}?cc=${COMPANY_EMAIL}&subject=${subject}&body=${encodedBody}`;
         window.location.href = mailtoLink;
     }
 
-    /**
-     * 將估價單資料格式化為適合郵件內文的純文字
-     * @param {object} quoteData 
-     * @returns {string}
-     */
     _formatQuoteForEmail(quoteData) {
         let content = "Hello,\n\nHere is your quotation from Ez Blinds:\n\n";
         content += "====================================\n";
@@ -148,5 +136,4 @@ export class UIManager {
 
         return content;
     }
-    // --- [新增結束] ---
 }
