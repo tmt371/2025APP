@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotation App v0.4</title> <style>
+    <title>Quotation App v0.5</title> <style>
         :root {
             --panel-border-color: #d1d5db;
             --keyboard-bg-color: #f3f4f6;
             --app-bg-color: #ffffff;
-            --highlight-color: #a0d3e8;
+            --highlight-color: #a0d3e8; /* 水藍色 */
             --primary-color: #1a237e;
             --medium-blue-color: #1976D2;
         }
@@ -43,13 +43,21 @@
         }
         .results-table { width: 100%; border-collapse: collapse; }
         .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: center; transition: background-color 0.3s; }
-        /* --- [新增] 項次欄位的寬度控制 --- */
         .results-table th:first-child, .results-table td:first-child {
             width: 40px;
+        }
+        /* --- [新增] 讓項次欄有手型游標，提示可點擊 --- */
+        .results-table th[data-column="sequence"], .results-table td[data-column="sequence"] {
+            cursor: pointer;
         }
         .results-table thead { background-color: #f2f2f2; }
         .results-table th[data-column="TYPE"] { cursor: pointer; }
         .results-table td.highlighted-cell { background-color: var(--highlight-color); }
+        /* --- [新增] 項次被選中時的高亮樣式 --- */
+        .results-table td.selected-row-highlight {
+            background-color: var(--highlight-color);
+            font-weight: bold;
+        }
         .type-bo1 { font-weight: bold; font-style: italic; }
         .type-sn { color: var(--medium-blue-color); font-weight: bold; }
 
@@ -145,7 +153,6 @@
             background-color: #fff; border: 1px solid #ccc; border-radius: 4px;
             cursor: pointer;
         }
-        /* --- [新增] Save/Load/Email 按鈕的特殊樣式 --- */
         #key-save { background-color: #dcfce7; }
         #key-load { background-color: #ffedd5; }
         #key-email { background-color: #e0e7ff; }
@@ -164,7 +171,7 @@
             <table class="results-table" id="results-table">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th data-column="sequence">#</th>
                         <th data-column="W">W</th><th data-column="H">H</th>
                         <th data-column="TYPE">TYPE</th><th data-column="Price">Price</th>
                     </tr>
