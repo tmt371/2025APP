@@ -6,6 +6,7 @@ const VALIDATION_RULES = {
 };
 
 const TYPE_SEQUENCE = ['BO', 'BO1', 'SN'];
+const LOCAL_STORAGE_KEY = 'rollerBlindQuoteData'; // --- [新增] 定義用於 localStorage 的金鑰 ---
 
 export class StateManager {
     constructor(initialState, eventAggregator) {
@@ -21,10 +22,12 @@ export class StateManager {
         this.eventAggregator.subscribe('userRequestedPriceCalculation', () => this._handlePriceCalculationRequest());
         this.eventAggregator.subscribe('priceCalculatedForRow', (data) => this._updatePriceForRow(data));
         this.eventAggregator.subscribe('userRequestedSummation', () => this._handleSummationRequest());
-
-        // --- [新增] 訂閱 Insert 和 Delete 事件 ---
         this.eventAggregator.subscribe('userRequestedInsertRow', () => this._handleInsertRow());
         this.eventAggregator.subscribe('userRequestedDeleteRow', () => this._handleDeleteRow());
+
+        // --- [新增] 訂閱 Save 和 Load 事件 ---
+        this.eventAggregator.subscribe('userRequestedSave', () => this._handleSave());
+        this.eventAggregator.subscribe('userRequestedLoad', () => this._handleLoad());
     }
 
     getState() { return this.state; }
@@ -177,52 +180,69 @@ export class StateManager {
         this.eventAggregator.publish('stateChanged', this.state);
         console.log(`Sum calculated: ${total}`);
     }
-
-    // --- [新增開始] ---
-    /**
-     * 處理插入新資料列的請求
-     */
     _handleInsertRow() {
         const { activeCell } = this.state.ui;
         const items = this.state.quoteData.rollerBlindItems;
-        const insertAtIndex = activeCell.rowIndex + 1; // 插入在當前行的下方
-
+        const insertAtIndex = activeCell.rowIndex + 1;
         const newItem = {
             itemId: `item-${Date.now()}`,
             width: null, height: null, fabricType: null, linePrice: null
         };
-
-        items.splice(insertAtIndex, 0, newItem); // 使用 splice 插入新項目
-        
-        // 更新 activeCell 指向新插入的行
+        items.splice(insertAtIndex, 0, newItem);
         this.state.ui.activeCell.rowIndex = insertAtIndex;
-
         this.eventAggregator.publish('stateChanged', this.state);
         console.log(`Row inserted at index ${insertAtIndex}.`);
     }
-
-    /**
-     * 處理刪除資料列的請求
-     */
     _handleDeleteRow() {
         const { activeCell } = this.state.ui;
         const items = this.state.quoteData.rollerBlindItems;
-
-        // 保護機制：如果只剩下一行，則不允許刪除
         if (items.length <= 1) {
             this.eventAggregator.publish('showNotification', { message: 'Cannot delete the last row.' });
             return;
         }
-
-        items.splice(activeCell.rowIndex, 1); // 使用 splice 刪除項目
-
-        // 更新 activeCell，避免指向不存在的索引
+        items.splice(activeCell.rowIndex, 1);
         if (activeCell.rowIndex >= items.length) {
             this.state.ui.activeCell.rowIndex = items.length - 1;
         }
-
         this.eventAggregator.publish('stateChanged', this.state);
         console.log(`Row deleted at index ${activeCell.rowIndex}.`);
+    }
+
+    // --- [新增開始] ---
+    /**
+     * 處理儲存估價單資料的請求
+     */
+    _handleSave() {
+        try {
+            const dataToSave = JSON.stringify(this.state.quoteData);
+            localStorage.setItem(LOCAL_STORAGE_KEY, dataToSave);
+            this.eventAggregator.publish('showNotification', { message: 'Quote saved successfully!' });
+            console.log('Quote data saved to localStorage.');
+        } catch (error) {
+            console.error('Failed to save to localStorage:', error);
+            this.eventAggregator.publish('showNotification', { message: 'Error: Could not save quote.', type: 'error' });
+        }
+    }
+
+    /**
+     * 處理讀取估價單資料的請求
+     */
+    _handleLoad() {
+        try {
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                const loadedQuoteData = JSON.parse(savedData);
+                this.state.quoteData = loadedQuoteData; // 覆蓋當前的估價單資料
+                this.eventAggregator.publish('stateChanged', this.state); // 發布變更以更新 UI
+                this.eventAggregator.publish('showNotification', { message: 'Quote loaded successfully!' });
+                console.log('Quote data loaded from localStorage.');
+            } else {
+                this.eventAggregator.publish('showNotification', { message: 'No saved quote found.' });
+            }
+        } catch (error) {
+            console.error('Failed to load from localStorage:', error);
+            this.eventAggregator.publish('showNotification', { message: 'Error: Could not load quote data.', type: 'error' });
+        }
     }
     // --- [新增結束] ---
 }
