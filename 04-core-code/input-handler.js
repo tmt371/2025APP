@@ -9,13 +9,9 @@ export class InputHandler {
         this._setupNumericKeyboard();
         this._setupTableInteraction();
         this._setupFunctionKeys();
-        this._setupPanelToggles(); // --- [新增] 呼叫設定面板切換的方法 ---
+        this._setupPanelToggles();
     }
     
-    // --- [新增開始] ---
-    /**
-     * 設定兩個面板（數字鍵盤和功能鍵盤）的切換把手的事件監聽
-     */
     _setupPanelToggles() {
         const numericToggle = document.getElementById('panel-toggle');
         if (numericToggle) {
@@ -31,12 +27,12 @@ export class InputHandler {
             });
         }
     }
-    // --- [新增結束] ---
 
     /**
-     * 設定鍵盤功能鍵 (F1, F2, Sum, Insert, Delete 等) 的事件監聽
+     * 設定所有功能鍵的事件監聽
      */
     _setupFunctionKeys() {
+        // 數字鍵盤上方的功能鍵
         const sumButton = document.getElementById('key-sum');
         if (sumButton) {
             sumButton.addEventListener('click', () => {
@@ -44,7 +40,7 @@ export class InputHandler {
             });
         }
 
-        // --- [新增] 為右側功能面板的按鈕綁定事件 ---
+        // 右側功能面板的按鈕
         const insertButton = document.getElementById('key-insert');
         if (insertButton) {
             insertButton.addEventListener('click', () => {
@@ -56,6 +52,28 @@ export class InputHandler {
         if (deleteButton) {
             deleteButton.addEventListener('click', () => {
                 this.eventAggregator.publish('userRequestedDeleteRow');
+            });
+        }
+        
+        // --- [新增] 為 Save, Load, Email 按鈕綁定事件 ---
+        const saveButton = document.getElementById('key-save');
+        if (saveButton) {
+            saveButton.addEventListener('click', () => {
+                this.eventAggregator.publish('userRequestedSave');
+            });
+        }
+
+        const loadButton = document.getElementById('key-load');
+        if (loadButton) {
+            loadButton.addEventListener('click', () => {
+                this.eventAggregator.publish('userRequestedLoad');
+            });
+        }
+
+        const emailButton = document.getElementById('key-email');
+        if (emailButton) {
+            emailButton.addEventListener('click', () => {
+                this.eventAggregator.publish('userRequestedEmailQuote');
             });
         }
     }
